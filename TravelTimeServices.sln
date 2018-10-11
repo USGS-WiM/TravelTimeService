@@ -7,13 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TravelTimeServices", "Trave
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TravelTimeAgent", "TravelTimeAgent\TravelTimeAgent.csproj", "{9C566B19-1349-42EE-9974-9DC2526ECF92}"
 EndProject
-
-	Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TravelTimeDB", "TravelTimeDB\TravelTimeDB.csproj", "{675EA60D-121F-49A6-A399-3001835585D7}"
-	EndProject
-	Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TravelTimeDB.Test", "TravelTimeDB.Test\TravelTimeDB.Test.csproj", "{41D3447B-0551-40FE-9E29-036D8B890D63}"
-	EndProject
-
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TravelTimeServices.Test", "TravelTimeServices.Test\TravelTimeServices.Test.csproj", "{F648386D-6B72-4660-A018-CD9F32AB0490}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TravelTimeAgent.Test", "TravelTimeAgent.Test\TravelTimeAgent.Test.csproj", "{749B5CA1-5959-466F-9387-6DE3D069DF09}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,18 +25,14 @@ Global
 		{9C566B19-1349-42EE-9974-9DC2526ECF92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C566B19-1349-42EE-9974-9DC2526ECF92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C566B19-1349-42EE-9974-9DC2526ECF92}.Release|Any CPU.Build.0 = Release|Any CPU
-		{675EA60D-121F-49A6-A399-3001835585D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{675EA60D-121F-49A6-A399-3001835585D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{675EA60D-121F-49A6-A399-3001835585D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{675EA60D-121F-49A6-A399-3001835585D7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{41D3447B-0551-40FE-9E29-036D8B890D63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{41D3447B-0551-40FE-9E29-036D8B890D63}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{41D3447B-0551-40FE-9E29-036D8B890D63}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{41D3447B-0551-40FE-9E29-036D8B890D63}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F648386D-6B72-4660-A018-CD9F32AB0490}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F648386D-6B72-4660-A018-CD9F32AB0490}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F648386D-6B72-4660-A018-CD9F32AB0490}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F648386D-6B72-4660-A018-CD9F32AB0490}.Release|Any CPU.Build.0 = Release|Any CPU
+		{749B5CA1-5959-466F-9387-6DE3D069DF09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{749B5CA1-5959-466F-9387-6DE3D069DF09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{749B5CA1-5959-466F-9387-6DE3D069DF09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{749B5CA1-5959-466F-9387-6DE3D069DF09}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

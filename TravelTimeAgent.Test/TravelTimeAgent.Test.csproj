@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TravelTimeDB\TravelTimeDB.csproj" />
+    <ProjectReference Include="..\TravelTimeAgent\TravelTimeAgent.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -48,7 +48,6 @@ namespace TravelTimeAgent
         #endregion
         #region Methods
         public string method() {
-
             return "TravelTime string";
         }
         #endregion
