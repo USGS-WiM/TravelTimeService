@@ -64,6 +64,9 @@ namespace TravelTimeDB.Test
                         case "L":
                             p.Value = 0.0;
                             break;
+                        case "R_r":
+                            //keep default
+                            break;
                         default:
                             toremove.Add(p);
                             break;
@@ -81,11 +84,15 @@ namespace TravelTimeDB.Test
                          new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=3.88 * (430.0 / 452.0) },
                          new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=430.0*Constants.CF_sqrkm2sqrm },
                          new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=15.0*Constants.CF_km2m },
-                     }
+                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Diminsionless", Abbr = "dim" },Value=1.0},
+                    }
                 });
-
+                //instantaneously spills 6,000 kg of a corrosive chemical
                 jobsonstest.Execute(6000);
-                //Assert.IsNotNull(jobsonstest);
+
+                Assert.IsNotNull(jobsonstest.Reaches);
+                //need better assert
+
             }
             catch (Exception ex)
             {

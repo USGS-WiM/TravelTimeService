@@ -6,8 +6,8 @@ namespace TravelTimeAgent.Resources
 {
     public class TravelTimeResult
     {
-        public ConcentrationTime LeadingEdge { get; set; }
-        public ConcentrationTime PeakConcentration { get; set; }        
-        public ConcentrationTime TrailingEdge { get; set; }
+        public Dictionary<string,ConcentrationTime> LeadingEdge { get; set; }
+        public Dictionary<string, ConcentrationTime> PeakConcentration { get; set; }        
+        public Dictionary<string, ConcentrationTime> TrailingEdge { get; set; }
     }
 }

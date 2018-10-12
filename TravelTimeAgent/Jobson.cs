@@ -72,7 +72,6 @@ using WiM.Resources;
 using System.Linq;
 using TravelTimeAgent.Resources;
 
-
 namespace TravelTimeAgent
 {
     public class Jobson: IMessage
@@ -127,23 +126,19 @@ namespace TravelTimeAgent
         }
         #endregion
         #region Methods
-        public bool Execute(Double InitialMass_M_i_kg, DateTime? starttime = null)
+        public bool Execute(Double? InitialMass_M_i_kg=null, DateTime? starttime = null)
         {
             try
             {            
                 if (!IsValid) throw new Exception("Jobson parameters are invalid");
                 if (starttime == null) InitialTimeStamp = DateTime.Today;
-                var mi_param = getParameters(parameterEnum.e_M_i);
-                mi_param.Value = InitialMass_M_i_kg * Constants.CF_kg2mg;
-                //add initial mass paramiter to first reach
-                this.Reaches[0].Parameters.Add( mi_param);
-            
+                            
                 for (int i = 1; i < this.Reaches.Count; i++)
                 {
                     var startingReach = this.Reaches.ElementAt(i - 1).Value;
                     var endingreach = this.Reaches.ElementAt(i).Value;
 
-                    if (!loadEstimate(startingReach, endingreach)) throw new Exception("Estimate failed to compute.");                    
+                    if (!loadEstimate(startingReach, endingreach, InitialMass_M_i_kg)) throw new Exception("Estimate failed to compute.");                    
                 }//next i
                 return true;
             }
@@ -152,7 +147,6 @@ namespace TravelTimeAgent
                 sm("Failed to execute jobsons Agent " + ex.Message, WiM.Resources.MessageType.error);
                 return false;
             }
-
         }
         #endregion
         #region "Helper Methods"
@@ -173,7 +167,7 @@ namespace TravelTimeAgent
                  Parameters = this._availableParameters.Cast<IParameter>().ToList()
             });
         }
-        private bool loadEstimate(Reach start, Reach end)
+        private bool loadEstimate(Reach start, Reach end, double? initialMassConcentration = null)
         {
             try
             {
@@ -182,8 +176,15 @@ namespace TravelTimeAgent
                 paramlist.AddRange(end.Parameters);
                 var aveParams = paramlist.GroupBy(k => k.Code).ToDictionary(k => k.FirstOrDefault().Code,
                     s => s.Aggregate((a, b) => aggregateParameters(a, b)).Value);
+                //add to start concentration
+                var m_i = getParameters(parameterEnum.e_M_i);
+                m_i.Value = initialMassConcentration.Value * Constants.CF_kg2mg;
+                start.Parameters.Add(m_i);
+                aveParams.Add(m_i.Code,m_i.Value);
+
                 // compute and solve travel time equations
-                end.Result = getTraveltimeResult(aveParams);
+                end.Result = getTraveltimeResult(aveParams,end.Parameters.FirstOrDefault(p=>p.Code =="Q").Value);
+      
                 return true;
             }
             catch (Exception ex)
@@ -192,15 +193,49 @@ namespace TravelTimeAgent
                 return false;
             }
         }
-
-        private TravelTimeResult getTraveltimeResult(Dictionary<string, double?> aveParams)
+        private void computeConcentrations(Reach end, Dictionary<string,double?> parameters)
+        {
+            try
+            {          
+                var Cp = evaluate(EquationEnum.e_peakconcentration_C_p, parameters);
+                var Cpmax = evaluate(EquationEnum.e_peakconcentration_C_pmax, parameters);
+            }
+            catch (Exception ex)
+            {
+                sm("Concentration failed to compute " + ex.Message);
+            }
+        }
+        private TravelTimeResult getTraveltimeResult(Dictionary<string, double?> parms,double? Qend)
         {
             try
             {
-                var D_aprime = evaluate(EquationEnum.e_dimdrainagearea_D_a_prime, aveParams);
-                var Q_aprime = evaluate(EquationEnum.e_dimrelativedischarge_Q_a_prime, aveParams);
-                var v = evaluate(EquationEnum.e_velocity_V, aveParams);
-                return null;
+                var tl = evaluate(EquationEnum.e_leadingedge, parms);
+                var tlmax = evaluate(EquationEnum.e_leadingedgemax, parms);
+                var pc = evaluate(EquationEnum.e_timepeakconcentration_T_p, parms);
+                var pcmax = evaluate(EquationEnum.e_timepeakconcentration_T_pmax, parms);
+                var Td10 = evaluate(EquationEnum.e_trailingedge, parms) * Constants.CF_sec2hrs;
+                var Td10max = evaluate(EquationEnum.e_trailingedgemax, parms) * Constants.CF_sec2hrs;
+
+                //change Q to end reach
+                parms["Q"] = Qend;
+                var Cp = evaluate(EquationEnum.e_peakconcentration_C_p, parms);
+                var Cpmax = evaluate(EquationEnum.e_peakconcentration_C_pmax, parms);
+
+                var result = new TravelTimeResult();
+                result.LeadingEdge = new Dictionary<string, ConcentrationTime>() {
+                    {getProbabilityName(probabilityTypeEnum.e_HighestProbable),new ConcentrationTime(){ Time =tl, Concentration=0  } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =tlmax, Concentration=0   } },
+                };
+                result.PeakConcentration = new Dictionary<string, ConcentrationTime>() {
+                    {getProbabilityName(probabilityTypeEnum.e_HighestProbable),new ConcentrationTime(){ Time =pc, Concentration=Cp   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =pcmax, Concentration=Cpmax   } },
+                };
+                result.TrailingEdge = new Dictionary<string, ConcentrationTime>() {
+                    {getProbabilityName(probabilityTypeEnum.e_HighestProbable),new ConcentrationTime(){ Time =tl+Td10, Concentration=0.1*Cp   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =tlmax+Td10max , Concentration=0.1*Cpmax  } },
+                };
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -212,12 +247,12 @@ namespace TravelTimeAgent
             try
             {
                 //get required parameters
-                var reqParams = getRequiredVariables(equationType).Select(e=>e.Code).ToList();
-                var availableparams = parameters.Where(p => reqParams.Contains(p.Key)).ToDictionary(k => k.Key, v => v.Value);
-                string expression = getExpression(equationType, availableparams.Select(x=>x.Key));
-                ExpressionOps eOps = new ExpressionOps(expression, availableparams);
-                if (!eOps.IsValid) throw new Exception("Expression failed to evaluate "+equationType);
+                var reqParams = getRequiredVariables(equationType).Select(e=>e.Code).Distinct().ToList();
+                if (reqParams.Except(parameters.Select(s => s.Key)).Any()) throw new KeyNotFoundException("Missing required parameter(s) "+equationType);
 
+                string expression = getExpression(equationType, parameters.Select(x=>x.Key));
+                ExpressionOps eOps = new ExpressionOps(expression, parameters);
+                if (!eOps.IsValid) throw new Exception("Expression failed to evaluate "+equationType);
                 return eOps.Value;
             }
             catch (Exception)
@@ -228,67 +263,134 @@ namespace TravelTimeAgent
         }
         private string getExpression(EquationEnum expression,IEnumerable<string> availableparams)
         {
-            List<string> args = null;
+            List<string> args = getExpressionArguments(expression,availableparams);
             string equation = string.Empty;
             switch (expression)
             {
                 case EquationEnum.e_velocity_V:
                 case EquationEnum.e_velocity_Vmax:
-                    if (new List<string>() { "S", "Q_a" }.All(p => (availableparams).Contains(p)))
-                    {
-                        //+-+-+-+-+ Slope,Discharge,Drainage Area V +-+-+-+-+\\
-                        args = getVelocityConstants(velocityPeakEnum.v_slope, expression == EquationEnum.e_velocity_Vmax);
-                        args.Insert(0, getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams));
-                        args.Insert(1, getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams));
-                        equation= "{2}+{3}*({0})^{4}*({1})^{5}*S^({6})*Q/D_a";
-                    }
-                    else if(new List<string>() { "Q_a" }.All(p => availableparams.Contains(p)))
-                    {
-                        //+-+-+-+-+ Discharge,Drainage Area V +-+-+-+-+\\
-                        args = getVelocityConstants(velocityPeakEnum.v_no_slope, expression == EquationEnum.e_velocity_Vmax);
-                        args.Insert(0, getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams));
-                        args.Insert(1, getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams));
-                        equation = "{2}+{3}*({0})^{4}*({1})^{5}*Q/D_a";
-                    }
-                    else
-                    {
-                        //+-+-+-+-+ Drainage Area only V  +-+-+-+-+\\
-                        //D"a is defined by equation 10 except that the local discharge (Q) is used in place of the mean
-                        //annual discharge(Qa).
-                        args = getVelocityConstants(velocityPeakEnum.v_drainagearea, expression == EquationEnum.e_velocity_Vmax);
-                        args.Insert(0, getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams).Replace("Q_a", "Q"));
-
-                        equation = "{1}+{2}*({0})^{3}*Q/D_a";
-                    }
+                    equation = "{1}+{2}*({0})^{3}*({4}){5}*Q/D_a";
                     break;
                 case EquationEnum.e_leadingedge:
-                    args=new List<string>() { getExpression(EquationEnum.e_timepeakconcentration_T_p, availableparams) };
-                    equation = "0.890 * {0}";                                             //Eq 18
+                case EquationEnum.e_leadingedgemax:
+                    equation = "0.890 * ({0})";                                          //Eq 18
                     break;
                 case EquationEnum.e_trailingedge:
-                    args = new List<string>() { getExpression(EquationEnum.e_unitpeakconcentration_C_up, availableparams) };
+                case EquationEnum.e_trailingedgemax:
                     equation = "(2*10^6)/({0})";                                         //Eq 19
                     break;
                 case EquationEnum.e_dimdrainagearea_D_a_prime:
-                    args = new List<string>() { Constants.gravityacc_g.ToString() };
                     equation = "(D_a^1.25*sqrt({0}))/Q_a";
                     break;
                 case EquationEnum.e_unitpeakconcentration_C_up:
-                    args = new List<string>() { getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams) };
-                    equation = "857*T_p^(-0.760*({0})^(-0.079) )";                      //Eq 7
+                case EquationEnum.e_unitpeakconcentration_C_upmax:
+                   equation = "857*({1})^(-0.760*({0})^(-0.079) )";                      //Eq 7
                     break;
                 case EquationEnum.e_timepeakconcentration_T_p:
-                    args = new List<string>() { getExpression(EquationEnum.e_velocity_V, availableparams) };
-                    equation = "L/({0})";
+                case EquationEnum.e_timepeakconcentration_T_pmax:
+                    equation = "L/({0})*{1}";
                     break;
                 case EquationEnum.e_dimrelativedischarge_Q_a_prime:
                     equation = "Q/Q_a";
+                    break;
+                case EquationEnum.e_peakconcentration_C_p:
+                case EquationEnum.e_peakconcentration_C_pmax:
+                    equation = "(({0})*R_r*M_i)/(1*10^6*(Q*{1}))";                               //eq 4 - rearranged to solve for C
                     break;
                 default:
                     throw new NotImplementedException(expression.ToString());                   
             }//end switch
 
-            return(args != null)?String.Format(equation, args.ToArray()):equation;
+            return(args != null)? string.Format(equation, args.ToArray()):equation;
+        }
+        private List<string> getExpressionArguments(EquationEnum expression, IEnumerable<string> availableparams)
+        {
+            List<string> args = null;
+            EquationEnum e_type;
+            string varg = String.Empty;
+            switch (expression)
+            {
+                case EquationEnum.e_velocity_V:
+                case EquationEnum.e_velocity_Vmax:
+                    
+                    if (new List<string>() { "S", "Q_a" }.All(p => (availableparams).Contains(p)))
+                    {
+                        //+-+-+-+-+ Slope,Discharge,Drainage Area V +-+-+-+-+\\
+                        args = getVelocityConstants(velocityPeakEnum.v_slope, expression == EquationEnum.e_velocity_Vmax);
+                        args.Insert(0, availableparams.Contains("D_a_prime")? "D_a_prime": getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams));
+                        args.Insert(4, string.Format("{0}^{{5}}", availableparams.Contains("Q_a_prime") ? "Q_a_prime" : getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams)));
+                        args.Insert(5, "*S^({6})");//add slope
+                        
+                        //equation = "{2}+{3}*({0})^{4}*({1})^{5}*S^({6})*Q/D_a";
+                        //           "{1}+{2}*({0})^{3}*({4})*({5})*Q/D_a";
+                    }
+                    else if (new List<string>() { "Q_a" }.All(p => availableparams.Contains(p)))
+                    {
+                        //+-+-+-+-+ Discharge,Drainage Area V +-+-+-+-+\\
+                        args = getVelocityConstants(velocityPeakEnum.v_no_slope, expression == EquationEnum.e_velocity_Vmax);
+                        args.Insert(0, availableparams.Contains("D_a_prime") ? "D_a_prime" : getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams));
+                        args.Insert(4, string.Format("({0})^{1}", availableparams.Contains("Q_a_prime") ? "Q_a_prime" : getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams),args[4]));
+                        args.Insert(5, "");//remove slope
+                    }
+                    else
+                    {
+                        //+-+-+-+-+ Drainage Area only V  +-+-+-+-+\\                        
+                        args = getVelocityConstants(velocityPeakEnum.v_drainagearea, expression == EquationEnum.e_velocity_Vmax);
+                        //D"a is defined by equation 10 except that the local discharge (Q) is used in place of the mean annual discharge(Qa).
+                        args.Insert(0, availableparams.Contains("Q_a_dprime") ? "Q_a_dprime" : getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams).Replace("Q_a", "Q"));
+                        args.Insert(4, "");//remove Q'a
+                        args.Insert(5, "");//remove slope
+                    }
+                    break;
+
+                case EquationEnum.e_leadingedge:
+                case EquationEnum.e_leadingedgemax:
+                    e_type = (expression == EquationEnum.e_leadingedge) ? EquationEnum.e_timepeakconcentration_T_p : EquationEnum.e_timepeakconcentration_T_pmax;
+                    varg = (expression == EquationEnum.e_leadingedge) ? "T_p" : "T_pmax";
+                    args = new List<string>() { availableparams.Contains(varg) ? varg : getExpression(e_type, availableparams) }; 
+                    break;
+
+                case EquationEnum.e_trailingedge:
+                case EquationEnum.e_trailingedgemax:
+                    e_type = (expression == EquationEnum.e_trailingedge) ? EquationEnum.e_unitpeakconcentration_C_up : EquationEnum.e_unitpeakconcentration_C_upmax;
+                    varg = (expression == EquationEnum.e_leadingedge) ? "C_up" : "C_upmax";
+                    args = new List<string>() { availableparams.Contains(varg) ? varg : getExpression(e_type, availableparams) };
+                    break;
+
+                case EquationEnum.e_dimdrainagearea_D_a_prime:
+                    args = new List<string>() { Constants.gravityacc_g.ToString() };
+                    break;
+
+                case EquationEnum.e_unitpeakconcentration_C_up:
+                case EquationEnum.e_unitpeakconcentration_C_upmax:
+                    e_type = (expression == EquationEnum.e_unitpeakconcentration_C_up) ? EquationEnum.e_timepeakconcentration_T_p : EquationEnum.e_timepeakconcentration_T_pmax;
+                    varg = (expression == EquationEnum.e_unitpeakconcentration_C_up) ? "T_p" : "T_pmax";
+                    args = new List<string>() { availableparams.Contains(varg)?varg:getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams), availableparams.Contains(varg) ? varg : getExpression(e_type, availableparams) };
+                    break;
+
+                case EquationEnum.e_timepeakconcentration_T_p:
+                case EquationEnum.e_timepeakconcentration_T_pmax:
+                    e_type = (expression == EquationEnum.e_timepeakconcentration_T_p) ? EquationEnum.e_velocity_V : EquationEnum.e_velocity_Vmax;
+                    varg = (expression == EquationEnum.e_timepeakconcentration_T_p) ? "V" : "Vmax";
+                    args = new List<string>() { availableparams.Contains(varg) ? varg : getExpression(e_type, availableparams), Constants.CF_sec2hrs.ToString() };
+                    break;
+
+                case EquationEnum.e_dimrelativedischarge_Q_a_prime:
+                    break;
+
+                case EquationEnum.e_peakconcentration_C_p:
+                case EquationEnum.e_peakconcentration_C_pmax:
+                    e_type = (expression == EquationEnum.e_peakconcentration_C_p) ? EquationEnum.e_unitpeakconcentration_C_up : EquationEnum.e_unitpeakconcentration_C_upmax;
+                    varg = (expression == EquationEnum.e_peakconcentration_C_p) ? "C_up" : "C_upmax";
+                    args = new List<string>() { availableparams.Contains(varg) ? varg : getExpression(e_type, availableparams), Constants.CF_cms2lps.ToString() };
+                   
+                    break;
+
+                default:
+                    throw new NotImplementedException(expression.ToString());
+            }//end switch
+
+            return args;
         }
         private List<IParameter> getRequiredVariables(EquationEnum expression)
         {
@@ -296,18 +398,20 @@ namespace TravelTimeAgent
             switch (expression)
             {
                 case EquationEnum.e_velocity_V:
+                case EquationEnum.e_velocity_Vmax:
                     variables.Add(getParameters(parameterEnum.e_D_a));
                     variables.AddRange(getRequiredVariables(EquationEnum.e_dimdrainagearea_D_a_prime));
                     variables.Add(getParameters(parameterEnum.e_Q));
-                    variables.Add(getParameters(parameterEnum.e_Q_a));
-                    variables.Add(getParameters(parameterEnum.e_S));
+                    //variables.Add(getParameters(parameterEnum.e_Q_a));
                     variables.AddRange(getRequiredVariables(EquationEnum.e_dimrelativedischarge_Q_a_prime));
                     break;
 
                 case EquationEnum.e_trailingedge:
+                case EquationEnum.e_trailingedgemax:
                     variables.AddRange(getRequiredVariables(EquationEnum.e_unitpeakconcentration_C_up));
                     break;
                 case EquationEnum.e_leadingedge:
+                case EquationEnum.e_leadingedgemax:
                     variables.AddRange(getRequiredVariables(EquationEnum.e_timepeakconcentration_T_p));
                     break;
                 case EquationEnum.e_dimdrainagearea_D_a_prime:
@@ -315,11 +419,13 @@ namespace TravelTimeAgent
                     variables.Add(getParameters(parameterEnum.e_Q_a));
                     break;
                 case EquationEnum.e_unitpeakconcentration_C_up:
+                case EquationEnum.e_unitpeakconcentration_C_upmax:
                     variables.AddRange(getRequiredVariables(EquationEnum.e_timepeakconcentration_T_p));
                     variables.Add(getParameters(parameterEnum.e_Q));
                     variables.Add(getParameters(parameterEnum.e_Q_a));
                     break;
                 case EquationEnum.e_timepeakconcentration_T_p:
+                case EquationEnum.e_timepeakconcentration_T_pmax:
                     variables.Add(getParameters(parameterEnum.e_distance));
                     variables.AddRange(getRequiredVariables(EquationEnum.e_velocity_V));
                     break;
@@ -327,12 +433,31 @@ namespace TravelTimeAgent
                     variables.Add(getParameters(parameterEnum.e_Q));
                     variables.Add(getParameters(parameterEnum.e_Q_a));
                     break;
+                case EquationEnum.e_peakconcentration_C_p:
+                case EquationEnum.e_peakconcentration_C_pmax:
+                    variables.Add(getParameters(parameterEnum.e_M_i));
+                    variables.Add(getParameters(parameterEnum.e_R_r));
+                    variables.Add(getParameters(parameterEnum.e_Q));
+                    variables.AddRange(getRequiredVariables(EquationEnum.e_unitpeakconcentration_C_up));
+                    break;
 
                 default:
                     throw new NotImplementedException(expression.ToString());
             }
 
-            return variables.Distinct().ToList();
+            return variables.ToList();
+        }
+        private string getProbabilityName(probabilityTypeEnum ptype)
+        {
+            switch (ptype)
+            {
+                case probabilityTypeEnum.e_HighestProbable:
+                    return "HighestProbable";
+                case probabilityTypeEnum.e_MaximumProbable:
+                    return "MaximumProbable";
+                default:
+                    return "other";
+            }
         }
         private List<string> getVelocityConstants(velocityPeakEnum velocityType,bool isMax = false)
         {
@@ -491,10 +616,16 @@ namespace TravelTimeAgent
             e_velocity_V,
             e_velocity_Vmax,
             e_trailingedge,
+            e_trailingedgemax,
             e_leadingedge,
+            e_leadingedgemax,
             e_dimdrainagearea_D_a_prime,
-            e_unitpeakconcentration_C_up,  
+            e_unitpeakconcentration_C_up,
+            e_unitpeakconcentration_C_upmax,
+            e_peakconcentration_C_p,
+            e_peakconcentration_C_pmax,
             e_timepeakconcentration_T_p,
+            e_timepeakconcentration_T_pmax,
             e_dimrelativedischarge_Q_a_prime 
         }
         public enum parameterEnum
@@ -504,14 +635,20 @@ namespace TravelTimeAgent
             e_S = 2,
             e_D_a = 3,
             e_distance = 4,
+            e_R_r = 5,
             e_M_i = 10,
-            e_R_r = 11
+            
         }
         public enum velocityPeakEnum
         {
             v_slope,
             v_no_slope,
             v_drainagearea
+        }
+        public enum probabilityTypeEnum
+        {
+            e_HighestProbable,
+            e_MaximumProbable
         }
         #endregion
     }
