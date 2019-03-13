@@ -28,15 +28,14 @@ namespace TravelTimeAgent
 {
     public interface ITravelTimeAgent:IMessage
     {
-        String method();     
+        Jobson initialization();
+        Jobson execute(Jobson ToT, Double? InitialMass_M_i_kg = null, DateTime? starttime = null);
     }
 
     public class TravelTimeAgent : ITravelTimeAgent
     {
         #region Properties
-        public List<Message> Messages { get; set; }
-        public Jobson ElapseTimes { get; set; }
-        
+        public List<Message> Messages { get; set; }        
 
         #endregion
         #region Constructor
@@ -47,9 +46,18 @@ namespace TravelTimeAgent
         }
         #endregion
         #region Methods
-        public string method() {
-            return "TravelTime string";
+        public Jobson initialization() {
+            return new Jobson();
         }
+
+        public Jobson execute(Jobson ToT, Double? InitialMass_M_i_kg = null, DateTime? starttime = null) {
+            if (!ToT.IsValid) throw new Exception("Jobsons is not valid"); 
+
+            ToT.Execute(InitialMass_M_i_kg, starttime);
+            return ToT;
+        }
+
+
         #endregion
         #region HELPER METHODS
         private void sm(string message, MessageType type = MessageType.info)

@@ -42,7 +42,7 @@ namespace TravelTimeServices.Controllers
             //returns list of available Navigations
             try
             {
-                var result = agent.method();
+                var result = agent.initialization();
                 sm(agent.Messages);
                 return Ok(result);
             }
@@ -51,9 +51,23 @@ namespace TravelTimeServices.Controllers
                 return HandleException(ex);
             }
         }
-        #endregion
-        #region HELPER METHODS
-        private void sm(List<Message> messages)
+        [HttpPost()][HttpGet("Execute")]
+        public async Task<IActionResult> Execute([FromBody]Jobson ToT, [FromQuery]Double? InitialMass_M_i_kg = null, [FromQuery]DateTime? starttime = null)
+        {
+            try
+            {
+                var result = agent.execute(ToT, InitialMass_M_i_kg, starttime);
+                sm(agent.Messages);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+            #endregion
+            #region HELPER METHODS
+            private void sm(List<Message> messages)
         {
             if (messages.Count < 1) return;
             HttpContext.Items[WiM.Services.Middleware.X_MessagesExtensions.msgKey] = messages;

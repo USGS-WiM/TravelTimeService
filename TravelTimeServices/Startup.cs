@@ -39,14 +39,6 @@ namespace TravelTimeServices
             //Configure injectable obj
             services.Configure<APIConfigSettings>(Configuration.GetSection("APIConfigSettings"));
             // Add framework services
-            services.AddDbContext<TravelTimeDBContext>(options =>
-                                                        options.UseNpgsql(String.Format(Configuration
-                                                            .GetConnectionString("TravelTimeConnection"), Configuration["dbuser"], Configuration["dbpassword"], Configuration["dbHost"]),
-                                                            //default is 1000, if > maxbatch, then EF will group requests in maxbatch size
-                                                            opt => opt.MaxBatchSize(1000))
-                                                            .EnableSensitiveDataLogging());
-
-            services.AddScoped<ITravelTimeAgent, TravelTimeServiceAgent>();
 
             services.AddScoped<ITravelTimeAgent, TravelTimeAgent.TravelTimeAgent>();
             services.AddScoped<IAnalyticsAgent, GoogleAnalyticsAgent>((gaa)=> new GoogleAnalyticsAgent(Configuration["AnalyticsKey"]));

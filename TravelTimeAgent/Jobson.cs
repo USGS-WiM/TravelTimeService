@@ -101,7 +101,7 @@ namespace TravelTimeAgent
                     foreach (var p in parameters)
                     {
                         //TODO: add finer grain validation based on param code
-                        if (!p.Value.HasValue || p.Value.Value < 0)
+                        if (p.Required && (!p.Value.HasValue || p.Value.Value < 0))
                             return false;
                     }
                     
@@ -164,7 +164,7 @@ namespace TravelTimeAgent
                  ID=0,
                  Description = "Initial injection reach",
                  Name = "Initial",
-                 Parameters = this._availableParameters.Cast<IParameter>().ToList()
+                 Parameters = this._availableParameters.Cast<Parameter>().ToList()
             });
         }
         private bool loadEstimate(Reach start, Reach end, double? initialMassConcentration = null)
@@ -172,7 +172,7 @@ namespace TravelTimeAgent
             try
             {
                 //average start and end parameters
-                List<IParameter> paramlist = new List<IParameter>(start.Parameters);
+                List<Parameter> paramlist = new List<Parameter>(start.Parameters);
                 paramlist.AddRange(end.Parameters);
                 var aveParams = paramlist.GroupBy(k => k.Code).ToDictionary(k => k.FirstOrDefault().Code,
                     s => s.Aggregate((a, b) => aggregateParameters(a, b)).Value);
@@ -209,6 +209,9 @@ namespace TravelTimeAgent
         {
             try
             {
+                var dimda = evaluate(EquationEnum.e_dimdrainagearea_D_a_prime, parms);
+                var dimqa = evaluate(EquationEnum.e_dimrelativedischarge_Q_a_prime, parms);
+                var vp = evaluate(EquationEnum.e_velocity_V, parms);
                 var tl = evaluate(EquationEnum.e_leadingedge, parms);
                 var tlmax = evaluate(EquationEnum.e_leadingedgemax, parms);
                 var pc = evaluate(EquationEnum.e_timepeakconcentration_T_p, parms);
@@ -392,9 +395,9 @@ namespace TravelTimeAgent
 
             return args;
         }
-        private List<IParameter> getRequiredVariables(EquationEnum expression)
+        private List<Parameter> getRequiredVariables(EquationEnum expression)
         {
-            List<IParameter> variables = new List<IParameter>();
+            List<Parameter> variables = new List<Parameter>();
             switch (expression)
             {
                 case EquationEnum.e_velocity_V:
@@ -507,17 +510,18 @@ namespace TravelTimeAgent
             }//end switch
             return velocityConstants.Select(i => i.ToString()).ToList();
         }
-        private IParameter aggregateParameters(IParameter p1,IParameter p2)
+        private Parameter aggregateParameters(Parameter p1, Parameter p2)
         {
             switch (p1.Code)
             {
-                case "L":
-                    return new Parameter() { Code = p1.Code, Value = p2.Value - p1.Value };
+                //case "L":
+                //    return new Parameter() { Code = p1.Code, Value = p2.Value - p1.Value };
                 default:
-                    return new Parameter() { Code = p1.Code, Value = (p1.Value + p2.Value) / 2 };
+                    //return new Parameter() { Code = p1.Code, Value = (p1.Value + p2.Value) / 2 };
+                    return new Parameter() { Code = p1.Code, Value = p2.Value };
             }
         }
-        private IParameter getParameters(parameterEnum p)
+        private Parameter getParameters(parameterEnum p)
         { 
             switch (p)
             {
@@ -585,7 +589,7 @@ namespace TravelTimeAgent
                     throw new NotImplementedException("Parameter not implemented " + p);
             }// end switch            
         }
-        private IUnit getUnit(parameterEnum p)
+        private Units getUnit(parameterEnum p)
         {
             switch (p)
             {
