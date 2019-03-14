@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WiM - USGS
+// copyright:   2017 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -21,12 +21,12 @@
 
 using System;
 using System.Collections.Generic;
-using WiM.Resources;
+using WIM.Resources;
 using TravelTimeAgent.Resources;
 
 namespace TravelTimeAgent
 {
-    public interface ITravelTimeAgent:IMessage
+    public interface ITravelTimeAgent
     {
         Jobson initialization();
         Jobson execute(Jobson ToT, Double? InitialMass_M_i_kg = null, DateTime? starttime = null);
@@ -35,13 +35,11 @@ namespace TravelTimeAgent
     public class TravelTimeAgent : ITravelTimeAgent
     {
         #region Properties
-        public List<Message> Messages { get; set; }        
 
         #endregion
         #region Constructor
         public TravelTimeAgent()
         {
-            this.Messages = new List<Message>();
 
         }
         #endregion
@@ -62,7 +60,7 @@ namespace TravelTimeAgent
         #region HELPER METHODS
         private void sm(string message, MessageType type = MessageType.info)
         {
-            this.Messages.Add(new Message() { msg=message, type = type });
+            
         }
 
         #endregion

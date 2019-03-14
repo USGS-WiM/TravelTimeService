@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TravelTimeAgent;
 using TravelTimeAgent.Resources;
-using WiM.Resources;
+using WIM.Resources;
 using Newtonsoft.Json;
 
 namespace TravelTimeDB.Test

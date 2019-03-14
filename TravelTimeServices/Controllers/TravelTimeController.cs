@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WiM - USGS
+// copyright:   2017 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -23,12 +23,12 @@ using System;
 using TravelTimeAgent;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using WiM.Resources;
+using WIM.Resources;
 
 namespace TravelTimeServices.Controllers
 {
     [Route("[controller]")]
-    public class TravelTimeController : WiM.Services.Controllers.ControllerBase
+    public class TravelTimeController : WIM.Services.Controllers.ControllerBase
     {
         public ITravelTimeAgent agent { get; set; }
         public TravelTimeController(ITravelTimeAgent agent ) : base()
@@ -42,8 +42,7 @@ namespace TravelTimeServices.Controllers
             //returns list of available Navigations
             try
             {
-                var result = agent.initialization();
-                sm(agent.Messages);
+                var result = agent.initialization();                
                 return Ok(result);
             }
             catch (Exception ex)
@@ -56,8 +55,7 @@ namespace TravelTimeServices.Controllers
         {
             try
             {
-                var result = agent.execute(ToT, InitialMass_M_i_kg, starttime);
-                sm(agent.Messages);
+                var result = agent.execute(ToT, InitialMass_M_i_kg, starttime);                
                 return Ok(result);
             }
             catch (Exception ex)
@@ -70,7 +68,7 @@ namespace TravelTimeServices.Controllers
             private void sm(List<Message> messages)
         {
             if (messages.Count < 1) return;
-            HttpContext.Items[WiM.Services.Middleware.X_MessagesExtensions.msgKey] = messages;
+            HttpContext.Items[WIM.Services.Middleware.X_MessagesExtensions.msgKey] = messages;
         }
         #endregion
     }

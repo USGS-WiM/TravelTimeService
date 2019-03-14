@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using WiM.Resources;
+using WIM.Resources;
 
 namespace TravelTimeAgent.Resources
 {

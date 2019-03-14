@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2018 WiM - USGS
+// copyright:   2018 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -66,15 +66,15 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using WiM.Resources.TimeSeries;
-using WiM.Utilities;
-using WiM.Resources;
+using WIM.Resources.TimeSeries;
+using WIM.Utilities;
+using WIM.Resources;
 using System.Linq;
 using TravelTimeAgent.Resources;
 
 namespace TravelTimeAgent
 {
-    public class Jobson: IMessage
+    public class Jobson
     {
         #region Properties and Fields
         private List<Parameter> _availableParameters = new List<Parameter>();
@@ -114,7 +114,6 @@ namespace TravelTimeAgent
                 }
             }
         }
-        public List<Message> Messages { get; } = new List<Message>();
 
         public bool ShouldSerializeIsValid()
         { return false; }
@@ -144,7 +143,7 @@ namespace TravelTimeAgent
             }
             catch (Exception ex)
             {
-                sm("Failed to execute jobsons Agent " + ex.Message, WiM.Resources.MessageType.error);
+                sm("Failed to execute jobsons Agent " + ex.Message, WIM.Resources.MessageType.error);
                 return false;
             }
         }
@@ -611,7 +610,7 @@ namespace TravelTimeAgent
             }//end switch
         }
         private void sm(string msg, MessageType type = MessageType.info) {
-            this.Messages.Add(new Message() { msg = msg, type = type });
+            
         }
         #endregion
         #region "Enumerated Constants"

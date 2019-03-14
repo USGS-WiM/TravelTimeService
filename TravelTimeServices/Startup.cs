@@ -5,10 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TravelTimeAgent;
 using Microsoft.AspNetCore.Mvc;
-using WiM.Services.Middleware;
-using WiM.Services.Analytics;
-using WiM.Utilities.ServiceAgent;
-using WiM.Services.Resources;
+using WIM.Services.Middleware;
+using WIM.Services.Analytics;
+using WIM.Utilities.ServiceAgent;
+using WIM.Services.Resources;
 using TravelTimeServices.Filters;
 
 namespace TravelTimeServices
