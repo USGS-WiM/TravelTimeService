@@ -28,10 +28,10 @@ using WIM.Resources;
 namespace TravelTimeServices.Controllers
 {
     [Route("[controller]")]
-    public class TravelTimeController : WIM.Services.Controllers.ControllerBase
+    public class JobsonsController : WIM.Services.Controllers.ControllerBase
     {
         public ITravelTimeAgent agent { get; set; }
-        public TravelTimeController(ITravelTimeAgent agent ) : base()
+        public JobsonsController(ITravelTimeAgent agent ) : base()
         {
             this.agent = agent;
         }
@@ -51,11 +51,11 @@ namespace TravelTimeServices.Controllers
             }
         }
         [HttpPost()][HttpGet("Execute")]
-        public async Task<IActionResult> Execute([FromBody]Jobson ToT, [FromQuery]Double? InitialMass_M_i_kg = null, [FromQuery]DateTime? starttime = null)
+        public async Task<IActionResult> Execute([FromBody]Jobson configurations, [FromQuery]Double? initialmassconcentration = null, [FromQuery]DateTime? starttime = null)
         {
             try
             {
-                var result = agent.execute(ToT, InitialMass_M_i_kg, starttime);                
+                var result = agent.execute(configurations, initialmassconcentration, starttime);                
                 return Ok(result);
             }
             catch (Exception ex)

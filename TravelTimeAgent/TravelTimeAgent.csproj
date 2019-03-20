@@ -11,4 +11,10 @@
     <PackageReference Include="WiM.Utilities" Version="1.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="APIConfigBuilder">
+      <HintPath>..\..\..\Projects\APIConfigBuilder\bin\Debug\netcoreapp2.2\APIConfigBuilder.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
