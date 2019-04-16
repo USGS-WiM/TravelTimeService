@@ -320,8 +320,8 @@ namespace TravelTimeAgent
                         //+-+-+-+-+ Slope,Discharge,Drainage Area V +-+-+-+-+\\
                         args = getVelocityConstants(velocityPeakEnum.v_slope, expression == EquationEnum.e_velocity_Vmax);
                         args.Insert(0, availableparams.Contains("D_a_prime")? "D_a_prime": getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams));
-                        args.Insert(4, string.Format("{0}^{{5}}", availableparams.Contains("Q_a_prime") ? "Q_a_prime" : getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams)));
-                        args.Insert(5, "*S^({6})");//add slope
+                        args.Insert(4, string.Format("({0})^{1}", availableparams.Contains("Q_a_prime") ? "Q_a_prime" : getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams), args[4]));
+                        args.Insert(5, string.Format("*S^({0})",args[5]));//add slope
                         
                         //equation = "{2}+{3}*({0})^{4}*({1})^{5}*S^({6})*Q/D_a";
                         //           "{1}+{2}*({0})^{3}*({4})*({5})*Q/D_a";
