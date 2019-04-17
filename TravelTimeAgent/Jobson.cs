@@ -271,14 +271,8 @@ namespace TravelTimeAgent
             {
                 case EquationEnum.e_velocity_V:
                 case EquationEnum.e_velocity_Vmax:
-                    //equation = "{1}+{2}*({0})^{3}*({4}){5}*Q/D_a";
-                    equation = "{1}+{2}*({0}^{3})*(({4})^{6})*({5}^{7})*(Q/D_a)";
-                    //equation = "({5}^{7})";
+                    equation = "{1}+{2}*({0})^{3}*({4}){5}*Q/D_a";
                     break;
-                //case EquationEnum.e_velocity_Vmax:
-                //    equation = "{1}+{2}*^"
-
-                
                 case EquationEnum.e_leadingedge:
                 case EquationEnum.e_leadingedgemax:
                     equation = "0.890 * ({0})";                                          //Eq 18
@@ -321,16 +315,14 @@ namespace TravelTimeAgent
                 case EquationEnum.e_velocity_V:
                 case EquationEnum.e_velocity_Vmax:
                     
-                    if (new List<string>() { "S", "Q_a" }.All(p => (availableparams).Contains(p))) //ask Jeremy
+                    if (new List<string>() { "S", "Q_a" }.All(p => (availableparams).Contains(p)))
                     {
                         //+-+-+-+-+ Slope,Discharge,Drainage Area V +-+-+-+-+\\
                         args = getVelocityConstants(velocityPeakEnum.v_slope, expression == EquationEnum.e_velocity_Vmax);
                         args.Insert(0, availableparams.Contains("D_a_prime")? "D_a_prime": getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams));
-                        //args.Insert(4, string.Format("{0}^{{5}}", availableparams.Contains("Q_a_prime") ? "Q_a_prime" : getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams)));
-                        //args.Insert(5, "*S^({6})");
-                        args.Insert(4, string.Format("{0}", availableparams.Contains("Q_a_prime") ? "Q_a_prime" : getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams))); //NESTING is not working ?
-                        args.Insert(5, "S"); //changed
-
+                        args.Insert(4, string.Format("{0}^{{5}}", availableparams.Contains("Q_a_prime") ? "Q_a_prime" : getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams)));
+                        args.Insert(5, "*S^({6})");//add slope
+                        
                         //equation = "{2}+{3}*({0})^{4}*({1})^{5}*S^({6})*Q/D_a";
                         //           "{1}+{2}*({0})^{3}*({4})*({5})*Q/D_a";
                     }
