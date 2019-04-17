@@ -321,7 +321,7 @@ namespace TravelTimeAgent
                         args = getVelocityConstants(velocityPeakEnum.v_slope, expression == EquationEnum.e_velocity_Vmax);
                         args.Insert(0, availableparams.Contains("D_a_prime")? "D_a_prime": getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams));
                         args.Insert(4, string.Format("({0})^{1}", availableparams.Contains("Q_a_prime") ? "Q_a_prime" : getExpression(EquationEnum.e_dimrelativedischarge_Q_a_prime, availableparams), args[4]));
-                        args.Insert(5, string.Format("*S^({0})",args[5]));//add slope
+                        args.Insert(5, string.Format("*S^({0})",args[6]));//add slope
                         
                         //equation = "{2}+{3}*({0})^{4}*({1})^{5}*S^({6})*Q/D_a";
                         //           "{1}+{2}*({0})^{3}*({4})*({5})*Q/D_a";
@@ -482,7 +482,7 @@ namespace TravelTimeAgent
                         velocityConstants.Add(0.02);//constB
                     }//end if
                     velocityConstants.Add(0.919);//constC
-                    velocityConstants.Add(-0.465);//constD
+                    velocityConstants.Add(-0.469);//constD
                     velocityConstants.Add(0.159); //constE
                     break;
                 case velocityPeakEnum.v_no_slope:
