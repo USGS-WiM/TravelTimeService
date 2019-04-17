@@ -62,7 +62,7 @@
 //          T_p, elapsed time to the peak concentration;
 //          Q, discharge at time of measurement
 //          Q_a, mean annual discharge
-// Timur_dev branch from staging
+//
 using System;
 using System.Collections.Generic;
 using System.Text;
