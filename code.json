@@ -5,7 +5,7 @@
     "description": "example",
     "version": "v0.0.0",
     "statusOptionsURL":"https://github.com/GSA/code-gov-web/blob/master/src/assets/schemas/2.0.0.json#L144-L152",
-	"status": "preliminary",	
+	"status": "Development",	
 
     "permissions": {
       "usageType": "openSource",
@@ -17,7 +17,7 @@
       ]
     },
 
-    "homepageURL": "https://wim.usgs.gov",
+    "homepageURL": "https://streamstats.usgs.gov",
     "downloadURL": "https://github.com/USGS-WiM/traveltimeServices/archive/master.zip",
     "disclaimerURL": "https://github.com/USGS-WiM/traveltimeServices/blob/master/LICENSE.md",
     "repositoryUrl": "https://github.com/USGS-WiM/traveltimeServices",
@@ -26,6 +26,7 @@
     "laborHours": null,
 
     "tags": [
+	    "streamstats,
       "Services",
 	  "REST"
     ],
@@ -40,7 +41,7 @@
     },
 
     "date": {
-      "metadataLastUpdated": "2018-01-25"
+      "metadataLastUpdated": "2019-04-2019"
     }
   }
 ]
