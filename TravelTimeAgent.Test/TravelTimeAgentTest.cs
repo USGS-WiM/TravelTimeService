@@ -62,9 +62,6 @@ namespace TravelTimeDB.Test
                         case "D_a":
                             p.Value = 350.0 * Constants.CF_sqrkm2sqrm;//m2
                             break;
-                        case "S":
-                            p.Value = 0.003;
-                            break;
                         case "L":
                             p.Value = 0.0;
                             break;
@@ -87,8 +84,7 @@ namespace TravelTimeDB.Test
                          new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=5.22 * (430.0 / 452.0) },
                          new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=3.88 * (430.0 / 452.0) },
                          new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=430.0*Constants.CF_sqrkm2sqrm },
-                         new Parameter(){ Code = "S", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=0.003 },
-                        new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=15.0*Constants.CF_km2m },
+                         new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=15.0*Constants.CF_km2m },
                          new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Diminsionless", Abbr = "dim" },Value=1.0 },
                     }
                 });
@@ -131,9 +127,9 @@ namespace TravelTimeDB.Test
                 {
                     switch (p.Code)
                     {
-                        case "Q_a":
+                        /*case "Q_a":
                             p.Value = 240;//m2
-                            break;
+                            break;*/
                         case "Q":
                             p.Value = 490;//m^3/s
                             break;
@@ -159,7 +155,7 @@ namespace TravelTimeDB.Test
                     ID = 19,
                     Parameters = new List<Parameter>()
                      {
-                         new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=240 },//((730-240)/(163.8-59))*(78.7-59.0)+240 },
+                         /*new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=240 },//((730-240)/(163.8-59))*(78.7-59.0)+240 },*/
                          new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=490 },
                          new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=16000*Constants.CF_sqrkm2sqrm },
                          new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=19.7*Constants.CF_km2m },
@@ -173,7 +169,7 @@ namespace TravelTimeDB.Test
                     ID = 104,
                     Parameters = new List<Parameter>()
                      {
-                         new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=730 },
+                         /*new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=730 },*/
                          new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=1068 },
                          new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=48000*Constants.CF_sqrkm2sqrm },
                          new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=104.8*Constants.CF_km2m },
@@ -209,7 +205,6 @@ namespace TravelTimeDB.Test
                 Assert.IsTrue(false, ex.Message);
             }
         }
-
         [TestMethod]
         public void JobsonExampleRhineModified()
         {
@@ -267,7 +262,7 @@ namespace TravelTimeDB.Test
                     Description = "Town 19.7 km downstream from injection site (km 59)",
                     ID = 19,
                     Parameters = new List<Parameter>()
-                     {
+                    {
                          new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=240 },//((730-240)/(163.8-59))*(78.7-59.0)+240 },
                          new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=490 },
                          new Parameter(){Code = "S", Unit = new Units(){Unit = "meter per meter", Abbr = "m/m"}, Value = 0.003},

@@ -62,7 +62,7 @@
 //          T_p, elapsed time to the peak concentration;
 //          Q, discharge at time of measurement
 //          Q_a, mean annual discharge
-//staging_dev
+//Timur_dev
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -208,9 +208,6 @@ namespace TravelTimeAgent
         {
             try
             {
-                var dimda = evaluate(EquationEnum.e_dimdrainagearea_D_a_prime, parms);
-                var dimqa = evaluate(EquationEnum.e_dimrelativedischarge_Q_a_prime, parms);
-                var vp = evaluate(EquationEnum.e_velocity_V, parms);
                 var tl = evaluate(EquationEnum.e_leadingedge, parms);
                 var tlmax = evaluate(EquationEnum.e_leadingedgemax, parms);
                 var pc = evaluate(EquationEnum.e_timepeakconcentration_T_p, parms);
@@ -250,7 +247,9 @@ namespace TravelTimeAgent
             {
                 //get required parameters
                 var reqParams = getRequiredVariables(equationType).Select(e=>e.Code).Distinct().ToList();
-                if (reqParams.Except(parameters.Select(s => s.Key)).Any()) throw new KeyNotFoundException("Missing required parameter(s) "+equationType);
+
+                #warning JK needs fix
+                //if (reqParams.Except(parameters.Select(s => s.Key)).Any()) throw new KeyNotFoundException("Missing required parameter(s) "+equationType);
 
                 string expression = getExpression(equationType, parameters.Select(x=>x.Key));
                 ExpressionOps eOps = new ExpressionOps(expression, parameters);
@@ -282,11 +281,16 @@ namespace TravelTimeAgent
                     equation = "(2*10^6)/({0})";                                         //Eq 19
                     break;
                 case EquationEnum.e_dimdrainagearea_D_a_prime:
-                    equation = "(D_a^1.25*sqrt({0}))/Q_a";
+                    equation = "(D_a^1.25*sqrt({0}))/Q_a";                              
                     break;
                 case EquationEnum.e_unitpeakconcentration_C_up:
                 case EquationEnum.e_unitpeakconcentration_C_upmax:
-                   equation = "857*({1})^(-0.760*({0})^(-0.079) )";                      //Eq 7
+                    if (availableparams.Contains("Q_a")) {
+                        equation = "857*({1})^(-0.760*({0})^(-0.079) )";
+                    } else {
+                        equation = "1025 *({1})^(-0.887)";
+                    }//Eq 7
+                    
                     break;
                 case EquationEnum.e_timepeakconcentration_T_p:
                 case EquationEnum.e_timepeakconcentration_T_pmax:
@@ -340,7 +344,7 @@ namespace TravelTimeAgent
                         args = getVelocityConstants(velocityPeakEnum.v_drainagearea, expression == EquationEnum.e_velocity_Vmax);
                         //D"a is defined by equation 10 except that the local discharge (Q) is used in place of the mean annual discharge(Qa).
                         args.Insert(0, availableparams.Contains("Q_a_dprime") ? "Q_a_dprime" : getExpression(EquationEnum.e_dimdrainagearea_D_a_prime, availableparams).Replace("Q_a", "Q"));
-                        args.Insert(4, "");//remove Q'a
+                        args.Insert(4, "1");//remove Q'a
                         args.Insert(5, "");//remove slope
                     }
                     break;
@@ -359,7 +363,7 @@ namespace TravelTimeAgent
                     args = new List<string>() { availableparams.Contains(varg) ? varg : getExpression(e_type, availableparams) };
                     break;
 
-                case EquationEnum.e_dimdrainagearea_D_a_prime:
+                case EquationEnum.e_dimdrainagearea_D_a_prime: //have to add a new if statement, if the Q_a given then compute as usually, otherwise replace it
                     args = new List<string>() { Constants.gravityacc_g.ToString() };
                     break;
 
@@ -404,7 +408,7 @@ namespace TravelTimeAgent
                     variables.Add(getParameters(parameterEnum.e_D_a));
                     variables.AddRange(getRequiredVariables(EquationEnum.e_dimdrainagearea_D_a_prime));
                     variables.Add(getParameters(parameterEnum.e_Q));
-                    //variables.Add(getParameters(parameterEnum.e_Q_a));
+                    variables.Add(getParameters(parameterEnum.e_Q_a));
                     variables.AddRange(getRequiredVariables(EquationEnum.e_dimrelativedischarge_Q_a_prime));
                     break;
 
@@ -503,6 +507,17 @@ namespace TravelTimeAgent
                     break;
 
                 case velocityPeakEnum.v_drainagearea:
+                    //Add methods
+                    if (!isMax)
+                    {
+                        velocityConstants.Add(0.152);
+                        velocityConstants.Add(8.1);
+                    } else
+                    {
+                        velocityConstants.Add(0.2);
+                        velocityConstants.Add(40);
+                    }
+                    velocityConstants.Add(0.595);
                     break;
                 default:
                     break;
@@ -529,7 +544,7 @@ namespace TravelTimeAgent
                     return new Parameter()
                     {
                         Code = "Q_a",
-                        Name = "mean annual discharge",
+                        Name = "Mean annual discharge",
                         Description = "mean annual discharge",
                         Required = false,
                         Unit = getUnit(p)
@@ -538,7 +553,7 @@ namespace TravelTimeAgent
                     return new Parameter()
                     {
                         Code = "Q",
-                        Name = "discharge at time of measurement",
+                        Name = "Discharge at time of measurement",
                         Description = "discharge at time of measurement",
                         Unit = getUnit(p)
                     };
@@ -579,7 +594,7 @@ namespace TravelTimeAgent
                     return new Parameter()
                     {
                         Code = "R_r",
-                        Name = "Recovery Ratio",
+                        Name = "Recovery ratio",
                         Description = "Recovery ratio (Mass recovered/ Mass initial)",
                         Unit = getUnit(p),
                         Value = 1.0
