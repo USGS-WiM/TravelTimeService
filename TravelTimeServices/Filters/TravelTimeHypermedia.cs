@@ -23,6 +23,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WIM.Hypermedia;
 using WIM.Services.Filters;
+using WIM.Resources;
 
 namespace TravelTimeServices.Filters
 {
@@ -35,7 +36,7 @@ namespace TravelTimeServices.Filters
             {
                 case "TravelTime":
                     results = new List<Link>();
-                    results.Add(new Link(BaseURI, "self by id", this.URLQuery +"/", WIM.Resources.refType.GET));
+                    results.Add(Hyperlinks.Generate(BaseURI, "self by id", this.URLQuery + "/", WIM.Resources.refType.GET));
                     break;
 
                 default:
@@ -53,7 +54,7 @@ namespace TravelTimeServices.Filters
             {
                 case "TravelTime":
                     results = new List<Link>();
-                    results.Add(new Link(BaseURI, "traveltime example", this.URLQuery + "/", WIM.Resources.refType.POST));
+                    results.Add(Hyperlinks.Generate(BaseURI, "liqwids example", this.URLQuery + "/", WIM.Resources.refType.POST));
 
                     break;                
                 default:
