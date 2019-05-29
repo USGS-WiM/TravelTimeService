@@ -85,7 +85,7 @@ namespace TravelTimeDB.Test
                          new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=3.88 * (430.0 / 452.0) },
                          new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=430.0*Constants.CF_sqrkm2sqrm },
                          new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=15.0*Constants.CF_km2m },
-                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Diminsionless", Abbr = "dim" },Value=1.0 },
+                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Dimensionless", Abbr = "dim" },Value=1.0 },
                     }
                 });
                 //instantaneously spills 6,000 kg of a corrosive chemical
@@ -173,7 +173,7 @@ namespace TravelTimeDB.Test
                          new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=1068 },
                          new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=48000*Constants.CF_sqrkm2sqrm },
                          new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=104.8*Constants.CF_km2m },
-                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Diminsionless", Abbr = "dim" },Value=1.0 },
+                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Dimensionless", Abbr = "dim" },Value=1.0 },
                     }
                 });
                 //instantaneously spills 6,000 kg of a corrosive chemical
@@ -283,7 +283,7 @@ namespace TravelTimeDB.Test
                          new Parameter(){Code = "S", Unit = new Units(){Unit = "meter per meter", Abbr = "m/m"}, Value = 0.003},
                          new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=48000*Constants.CF_sqrkm2sqrm },
                          new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m^2"  },Value=104.8*Constants.CF_km2m },
-                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Diminsionless", Abbr = "dim" },Value=1.0 },
+                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Dimensionless", Abbr = "dim" },Value=1.0 },
                     }
                 });
                 //instantaneously spills 6,000 kg of a corrosive chemical

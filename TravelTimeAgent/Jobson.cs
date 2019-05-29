@@ -79,9 +79,7 @@ namespace TravelTimeAgent
         #region Properties and Fields
         private List<Parameter> _availableParameters = new List<Parameter>();
 
-        public DateTime? InitialTimeStamp { get; private set; }
-        public bool ShouldSerializeInitialTimeStamp()
-        { return InitialTimeStamp.HasValue; }
+        public DateTime InitialTimeStamp { get; private set; }
         
         public SortedDictionary<Double, Reach> Reaches { get; set; }
         public bool IsValid {
@@ -128,9 +126,9 @@ namespace TravelTimeAgent
         public bool Execute(Double? InitialMass_M_i_kg=null, DateTime? starttime = null)
         {
             try
-            {            
+            {
+                InitialTimeStamp = starttime.HasValue?starttime.Value:DateTime.Today;
                 if (!IsValid) throw new Exception("Jobson parameters are invalid");
-                if (starttime == null) InitialTimeStamp = DateTime.Today;
                             
                 for (int i = 1; i < this.Reaches.Count; i++)
                 {
@@ -222,16 +220,16 @@ namespace TravelTimeAgent
 
                 var result = new TravelTimeResult();
                 result.LeadingEdge = new Dictionary<string, ConcentrationTime>() {
-                    {getProbabilityName(probabilityTypeEnum.e_HighestProbable),new ConcentrationTime(){ Time =tl, Concentration=0  } },
-                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =tlmax, Concentration=0   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tl), Comments=$"{tl} Calculation time", TimeLapse=timeLapse(tl), Concentration=0  } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tlmax), Comments=$"{tlmax} Calculation time", TimeLapse=timeLapse(tlmax), Concentration=0   } },
                 };
                 result.PeakConcentration = new Dictionary<string, ConcentrationTime>() {
-                    {getProbabilityName(probabilityTypeEnum.e_HighestProbable),new ConcentrationTime(){ Time =pc, Concentration=Cp   } },
-                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =pcmax, Concentration=Cpmax   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(pc), Comments=$"{pc} Calculation time", TimeLapse=timeLapse(pc), Concentration=Cp   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(pcmax), Comments=$"{pcmax} Calculation time", TimeLapse=timeLapse(pcmax), Concentration=Cpmax   } },
                 };
                 result.TrailingEdge = new Dictionary<string, ConcentrationTime>() {
-                    {getProbabilityName(probabilityTypeEnum.e_HighestProbable),new ConcentrationTime(){ Time =tl+Td10, Concentration=0.1*Cp   } },
-                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =tlmax+Td10max , Concentration=0.1*Cpmax  } },
+                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tl+Td10), Comments=$"{tl+Td10} Calculation time", TimeLapse=timeLapse(tl + Td10), Concentration=0.1*Cp   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tlmax+Td10max), Comments=$"{tl+Td10max} Calculation time", TimeLapse=timeLapse(tl + Td10max), Concentration=0.1*Cpmax  } },
                 };
 
                 return result;
@@ -457,8 +455,8 @@ namespace TravelTimeAgent
         {
             switch (ptype)
             {
-                case probabilityTypeEnum.e_HighestProbable:
-                    return "HighestProbable";
+                case probabilityTypeEnum.e_MostProbable:
+                    return "MostProbable";
                 case probabilityTypeEnum.e_MaximumProbable:
                     return "MaximumProbable";
                 default:
@@ -545,7 +543,7 @@ namespace TravelTimeAgent
                     {
                         Code = "Q_a",
                         Name = "Mean annual discharge",
-                        Description = "mean annual discharge",
+                        Description = "Mean annual discharge",
                         Required = false,
                         Unit = getUnit(p)
                     };
@@ -554,7 +552,7 @@ namespace TravelTimeAgent
                     {
                         Code = "Q",
                         Name = "Discharge at time of measurement",
-                        Description = "discharge at time of measurement",
+                        Description = "Discharge at time of measurement",
                         Unit = getUnit(p)
                     };
                 case parameterEnum.e_S:
@@ -571,7 +569,7 @@ namespace TravelTimeAgent
                     {
                         Code = "D_a",
                         Name = "Drainage area",
-                        Description = "drainage area",
+                        Description = "Drainage area",
                         Unit = getUnit(p)
                     };
                 case parameterEnum.e_distance:
@@ -587,7 +585,7 @@ namespace TravelTimeAgent
                     {
                         Code = "M_i",
                         Name = "Mass of pollutant spilled",
-                        Description = "actual mass of pollutant spilled",
+                        Description = "Actual mass of pollutant spilled",
                         Unit = getUnit(p)
                     };
                 case parameterEnum.e_R_r:
@@ -609,23 +607,28 @@ namespace TravelTimeAgent
             {
                 case parameterEnum.e_Q_a:
                 case parameterEnum.e_Q:
-                    return new Units { Unit = "cubic meters per second", Abbr = "cms" };
+                    return new Units { Unit = "Cubic meters per second", Abbr = "cms" };
                 case parameterEnum.e_S:
-                    return new Units { Unit = "meters per meters", Abbr = "m/m" };
+                    return new Units { Unit = "Meters per meters", Abbr = "m/m" };
                 case parameterEnum.e_D_a:
-                    return new Units { Unit = "square meters", Abbr = "m^2" };
+                    return new Units { Unit = "Square meters", Abbr = "m^2" };
                 case parameterEnum.e_distance:
-                    return new Units { Unit = "meters", Abbr = "m" };
+                    return new Units { Unit = "Meters", Abbr = "m" };
                 case parameterEnum.e_M_i:
-                    return new Units { Unit = "milligrams", Abbr = "mg" };
+                    return new Units { Unit = "Milligrams", Abbr = "mg" };
                 case parameterEnum.e_R_r:
-                    return new Units { Unit = "Diminsionless", Abbr = "dim" };
+                    return new Units { Unit = "Dimensionless", Abbr = "dim" };
                 default:
                     throw new NotImplementedException("Parameter not implemented "+p);
             }//end switch
         }
         private void sm(string msg, MessageType type = MessageType.info) {
             
+        }
+        private String timeLapse(double hours)
+        {
+            TimeSpan span = InitialTimeStamp.AddHours(hours) - InitialTimeStamp;
+            return String.Format("{0} days, {1} hours, {2} minutes, {3} seconds", span.Days, span.Hours, span.Minutes, span.Seconds);
         }
         #endregion
         #region "Enumerated Constants"
@@ -665,7 +668,7 @@ namespace TravelTimeAgent
         }
         public enum probabilityTypeEnum
         {
-            e_HighestProbable,
+            e_MostProbable,
             e_MaximumProbable
         }
         #endregion
