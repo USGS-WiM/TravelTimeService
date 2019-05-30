@@ -80,7 +80,9 @@ namespace TravelTimeAgent
         private List<Parameter> _availableParameters = new List<Parameter>();
 
         public DateTime InitialTimeStamp { get; private set; }
-        
+        public bool ShouldSerializeInitialTimeStamp()
+        { return InitialTimeStamp != DateTime.MinValue; }
+
         public SortedDictionary<Double, Reach> Reaches { get; set; }
         public bool IsValid {
             get {
