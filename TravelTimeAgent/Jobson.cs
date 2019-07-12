@@ -221,17 +221,31 @@ namespace TravelTimeAgent
                 var Cpmax = evaluate(EquationEnum.e_peakconcentration_C_pmax, parms);
 
                 var result = new TravelTimeResult();
-                result.LeadingEdge = new Dictionary<string, ConcentrationTime>() {
+                result.Tracer_Response.LeadingEdge = new Dictionary<string, ConcentrationTime>() {
                     {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tl), Comments=$"{tl} Calculation time", TimeLapse=timeLapse(tl), Concentration=0  } },
                     {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tlmax), Comments=$"{tlmax} Calculation time", TimeLapse=timeLapse(tlmax), Concentration=0   } },
                 };
-                result.PeakConcentration = new Dictionary<string, ConcentrationTime>() {
+                result.Tracer_Response.PeakConcentration = new Dictionary<string, ConcentrationTime>() {
                     {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(pc), Comments=$"{pc} Calculation time", TimeLapse=timeLapse(pc), Concentration=Cp   } },
                     {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(pcmax), Comments=$"{pcmax} Calculation time", TimeLapse=timeLapse(pcmax), Concentration=Cpmax   } },
                 };
-                result.TrailingEdge = new Dictionary<string, ConcentrationTime>() {
+                result.Tracer_Response.TrailingEdge = new Dictionary<string, ConcentrationTime>() {
                     {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tl+Td10), Comments=$"{tl+Td10} Calculation time", TimeLapse=timeLapse(tl + Td10), Concentration=0.1*Cp   } },
                     {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tlmax+Td10max), Comments=$"{tl+Td10max} Calculation time", TimeLapse=timeLapse(tl + Td10max), Concentration=0.1*Cpmax  } },
+                };
+                result.Equations = new Dictionary<string, Equation>()
+                {
+                    {"vmax", new Equation(){
+                            expression = getExpression(EquationEnum.e_velocity_Vmax, parms.Select(p=>p.Key)),
+                            value = evaluate(EquationEnum.e_velocity_Vmax, parms),
+                            units = "m/s"
+                        }
+                    },
+                    {"v", new Equation(){
+                            expression = getExpression(EquationEnum.e_velocity_V, parms.Select(p=>p.Key)),
+                            value = evaluate(EquationEnum.e_velocity_V, parms),
+                            units = "m/s" }
+                        }
                 };
 
                 return result;
