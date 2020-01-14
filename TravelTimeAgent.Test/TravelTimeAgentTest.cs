@@ -298,5 +298,97 @@ namespace TravelTimeDB.Test
                 Assert.IsTrue(false, ex.Message);
             }
         }
+        [TestMethod]
+        public void Sabitov_McCarthy()
+        {
+            try
+            {
+                List<Parameter> toremove = new List<Parameter>();
+                Jobson jobsonstest = new Jobson();
+                jobsonstest.Reaches[0].Parameters.ForEach(p =>
+                {
+                    switch (p.Code)
+                    {
+                        case "Q_a":
+                            p.Value = 0.04;//m2
+                            break;
+                        case "Q":
+                            p.Value = .2;//m^3/s
+                            break;
+                        case "S":
+                            p.Value = 0.038307;
+                            break;
+                        case "D_a":
+                            p.Value = 2720000;//m2
+                            break;
+                        case "L":
+                            p.Value = 1870;
+                            break;
+                        case "R_r":
+                            //keep default
+                            break;
+                        default:
+                            toremove.Add(p);
+                            break;
+                    }//end switch
+                });
+                toremove.ForEach(p => jobsonstest.Reaches[0].Parameters.Remove(p));
+                jobsonstest.Reaches.Add(2, new Reach()
+                {
+                    Name = "Reach 2",
+                    Description = "Second Reach",
+                    ID = 2,
+                    Parameters = new List<Parameter>()
+                    {
+                         new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=1.41 },
+                         new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=3.5 },
+                         new Parameter(){Code = "S", Unit = new Units(){Unit = "meter per meter", Abbr = "m/m"}, Value = 0.009356},
+                         new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=75270000 },
+                         new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m"  },Value=963 },
+                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Dimensionless", Abbr = "dim" },Value=1.0 },
+                    }
+                });
+                jobsonstest.Reaches.Add(3, new Reach()
+                {
+                    Name = "Reach 3",
+                    Description = "Third Reach",
+                    ID = 3,
+                    Parameters = new List<Parameter>()
+                     {
+                         new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=1.52 },
+                         new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=3.5 },
+                         new Parameter(){Code = "S", Unit = new Units(){Unit = "meter per meter", Abbr = "m/m"}, Value = 0.008685},
+                         new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=83050000 },
+                         new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m"  },Value=3120 },
+                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Dimensionless", Abbr = "dim" },Value=1.0 },
+                    }
+                });
+                jobsonstest.Reaches.Add(4, new Reach()
+                {
+                    Name = "Reach 4",
+                    Description = "Fourth Reach",
+                    ID = 4,
+                    Parameters = new List<Parameter>()
+                     {
+                         new Parameter(){ Code = "Q_a", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms" },Value=1.57 },
+                         new Parameter(){ Code = "Q", Unit = new Units(){Unit = "cubic meters per second", Abbr = "cms"  },Value=3.5 },
+                         new Parameter(){Code = "S", Unit = new Units(){Unit = "meter per meter", Abbr = "m/m"}, Value = 0.006399},
+                         new Parameter(){ Code = "D_a", Unit = new Units(){Unit = "square meters", Abbr = "m^2"  },Value=86540000 },
+                         new Parameter(){ Code = "L", Unit = new Units(){Unit = "meters", Abbr = "m"  },Value=2000 },
+                         new Parameter(){ Code = "R_r", Unit = new Units(){Unit = "Dimensionless", Abbr = "dim" },Value=1.0 },
+                    }
+                });
+                //instantaneously spills 100 kg of a corrosive chemical
+                jobsonstest.Execute(100);
+
+                Assert.IsNotNull(jobsonstest.Reaches);
+                //need better assert
+
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(false, ex.Message);
+            }
+        }
     }
 }

@@ -80,6 +80,15 @@ namespace TravelTimeAgent
         private List<Parameter> _availableParameters = new List<Parameter>();
 
         public DateTime InitialTimeStamp { get; private set; }
+
+        public Dictionary<string, double> UpstreamReach = new Dictionary<string, double>  // stores accumulated times for upstream reach
+        {
+            { "ur_tlacc", 0 },
+            { "ur_tlmaxacc", 0 },
+            { "ur_pcacc", 0 },
+            { "ur_pcmaxacc", 0 }
+        };
+
         public bool ShouldSerializeInitialTimeStamp()
         { return InitialTimeStamp != DateTime.MinValue; }
 
@@ -131,11 +140,13 @@ namespace TravelTimeAgent
             {
                 InitialTimeStamp = starttime.HasValue?starttime.Value:DateTime.Today;
                 if (!IsValid) throw new Exception("Jobson parameters are invalid");
-                            
+                
+
                 for (int i = 1; i < this.Reaches.Count; i++)
                 {
                     var startingReach = this.Reaches.ElementAt(i - 1).Value;
                     var endingreach = this.Reaches.ElementAt(i).Value;
+                    
 
                     if (!loadEstimate(startingReach, endingreach, InitialMass_M_i_kg)) throw new Exception("Estimate failed to compute.");                    
                 }//next i
@@ -209,11 +220,17 @@ namespace TravelTimeAgent
             try
             {
                 var tl = evaluate(EquationEnum.e_leadingedge, parms);
+                var tlacc = tl + UpstreamReach["urtlacc"];//0.89 * (UpstreamReach["ur_pcacc"] + tl);
                 var tlmax = evaluate(EquationEnum.e_leadingedgemax, parms);
+                var tlmaxacc = 0.89 * (UpstreamReach["ur_pcmaxacc"] + tlmax);
                 var pc = evaluate(EquationEnum.e_timepeakconcentration_T_p, parms);
+                var pcacc = pc + UpstreamReach["ur_pcacc"];
                 var pcmax = evaluate(EquationEnum.e_timepeakconcentration_T_pmax, parms);
+                var pcmaxacc = pcmax + UpstreamReach["ur_pcmaxacc"];
                 var Td10 = evaluate(EquationEnum.e_trailingedge, parms) * Constants.CF_sec2hrs;
+                var trailacc = Td10 + (UpstreamReach["ur_tlacc"] + tl);
                 var Td10max = evaluate(EquationEnum.e_trailingedgemax, parms) * Constants.CF_sec2hrs;
+                var trailmaxacc = Td10max + (UpstreamReach["ur_tlmaxacc"] + tlmax);
 
                 //change Q to end reach
                 parms["Q"] = Qend;
@@ -222,16 +239,16 @@ namespace TravelTimeAgent
 
                 var result = new TravelTimeResult();
                 result.Tracer_Response.LeadingEdge = new Dictionary<string, ConcentrationTime>() {
-                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tl), Comments=$"{tl} Calculation time", TimeLapse=timeLapse(tl), Concentration=0  } },
-                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tlmax), Comments=$"{tlmax} Calculation time", TimeLapse=timeLapse(tlmax), Concentration=0   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ ReachTime =timeLapse(tl), Date =InitialTimeStamp.AddHours(tlacc), Comments=$"{tl} Calculation time", CumTime=timeLapse(tlacc), Concentration=0  } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ ReachTime =timeLapse(tlmax), Date =InitialTimeStamp.AddHours(tlmaxacc), Comments=$"{tlmax} Calculation time", CumTime=timeLapse(tlmaxacc), Concentration=0   } },
                 };
                 result.Tracer_Response.PeakConcentration = new Dictionary<string, ConcentrationTime>() {
-                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(pc), Comments=$"{pc} Calculation time", TimeLapse=timeLapse(pc), Concentration=Cp   } },
-                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(pcmax), Comments=$"{pcmax} Calculation time", TimeLapse=timeLapse(pcmax), Concentration=Cpmax   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ ReachTime =timeLapse(pc), Date =InitialTimeStamp.AddHours(pcacc), Comments=$"{pc} Calculation time", CumTime=timeLapse(pcacc), Concentration=Cp   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ ReachTime =timeLapse(pcmax), Date =InitialTimeStamp.AddHours(pcmaxacc), Comments=$"{pcmax} Calculation time", CumTime=timeLapse(pcmaxacc), Concentration=Cpmax   } }
                 };
                 result.Tracer_Response.TrailingEdge = new Dictionary<string, ConcentrationTime>() {
-                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tl+Td10), Comments=$"{tl+Td10} Calculation time", TimeLapse=timeLapse(tl + Td10), Concentration=0.1*Cp   } },
-                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ Time =InitialTimeStamp.AddHours(tlmax+Td10max), Comments=$"{tl+Td10max} Calculation time", TimeLapse=timeLapse(tl + Td10max), Concentration=0.1*Cpmax  } },
+                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ ReachTime =timeLapse(tl+Td10), Date =InitialTimeStamp.AddHours(trailacc), Comments=$"{tl+Td10} Calculation time", CumTime=timeLapse(trailacc), Concentration=0.1*Cp   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ ReachTime =timeLapse(tlmax+Td10max), Date =InitialTimeStamp.AddHours(trailmaxacc), Comments=$"{tl+Td10max} Calculation time", CumTime=timeLapse(trailmaxacc), Concentration=0.1*Cpmax  } }
                 };
                 result.Equations = new Dictionary<string, Equation>()
                 {
@@ -247,6 +264,11 @@ namespace TravelTimeAgent
                             units = "m/s" }
                         }
                 };
+
+                UpstreamReach["ur_tlacc"] = tlacc;
+                UpstreamReach["ur_tlmaxacc"] = tlmaxacc;
+                UpstreamReach["ur_pcacc"] = pcacc;
+                UpstreamReach["ur_pcmaxacc"] = pcmaxacc;
 
                 return result;
             }
@@ -300,9 +322,9 @@ namespace TravelTimeAgent
                 case EquationEnum.e_unitpeakconcentration_C_up:
                 case EquationEnum.e_unitpeakconcentration_C_upmax:
                     if (availableparams.Contains("Q_a")) {
-                        equation = "857*({1})^(-0.760*({0})^(-0.079) )";
+                        equation = "857*({1} +" + UpstreamReach["ur_pcacc"] + ")^(-0.760*({0})^(-0.079) )";
                     } else {
-                        equation = "1025 *({1})^(-0.887)";
+                        equation = "1025 *({1} +" + UpstreamReach["ur_pcaccmax"] + ")^(-0.887)";
                     }//Eq 7
                     
                     break;
@@ -425,7 +447,6 @@ namespace TravelTimeAgent
                     variables.Add(getParameters(parameterEnum.e_Q_a));
                     variables.AddRange(getRequiredVariables(EquationEnum.e_dimrelativedischarge_Q_a_prime));
                     break;
-
                 case EquationEnum.e_trailingedge:
                 case EquationEnum.e_trailingedgemax:
                     variables.AddRange(getRequiredVariables(EquationEnum.e_unitpeakconcentration_C_up));
@@ -644,7 +665,18 @@ namespace TravelTimeAgent
         private String timeLapse(double hours)
         {
             TimeSpan span = InitialTimeStamp.AddHours(hours) - InitialTimeStamp;
-            return String.Format("{0} days, {1} hours, {2} minutes, {3} seconds", span.Days, span.Hours, span.Minutes, span.Seconds);
+            if (span.Days != 0 && span.Hours != 0)
+            {
+                return String.Format("{0} days, {1} hours, {2} minutes", span.Days, span.Hours, span.Minutes);
+            } 
+            if(span.Days == 0 && span.Hours != 0)
+            {
+                return String.Format("{0} hours, {1} minutes", span.Hours, span.Minutes);
+            } 
+            else
+            {
+                return String.Format("{0} minutes", span.Minutes);
+            }
         }
         #endregion
         #region "Enumerated Constants"
