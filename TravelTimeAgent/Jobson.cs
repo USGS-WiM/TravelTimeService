@@ -220,9 +220,9 @@ namespace TravelTimeAgent
             try
             {
                 var tl = evaluate(EquationEnum.e_leadingedge, parms);
-                var tlacc = 0.89 * (UpstreamReach["ur_pcacc"] + tl);//tl + UpstreamReach["urtlacc"];
+                var tlacc = tl + UpstreamReach["ur_tlacc"];//0.89 * (UpstreamReach["ur_pcacc"] + tl);
                 var tlmax = evaluate(EquationEnum.e_leadingedgemax, parms);
-                var tlmaxacc = 0.89 * (UpstreamReach["ur_pcmaxacc"] + tlmax);
+                var tlmaxacc = tlmax + UpstreamReach["ur_tlmaxacc"];// 0.89 * (UpstreamReach["ur_pcmaxacc"] + tlmax);
                 var pc = evaluate(EquationEnum.e_timepeakconcentration_T_p, parms);
                 var pcacc = pc + UpstreamReach["ur_pcacc"];
                 var pcmax = evaluate(EquationEnum.e_timepeakconcentration_T_pmax, parms);
