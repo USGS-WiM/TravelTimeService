@@ -243,24 +243,24 @@ namespace TravelTimeAgent
                     {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ ReachTime =timeLapse(tlmax), Date =InitialTimeStamp.AddHours(tlmaxacc), Comments=$"{tlmax} Calculation time", CumTime=timeLapse(tlmaxacc), Concentration=0   } },
                 };
                 result.Tracer_Response.PeakConcentration = new Dictionary<string, ConcentrationTime>() {
-                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ ReachTime =timeLapse(pc), Date =InitialTimeStamp.AddHours(pcacc), Comments=$"{pc} Calculation time", CumTime=timeLapse(pcacc), Concentration=Cp   } },
-                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ ReachTime =timeLapse(pcmax), Date =InitialTimeStamp.AddHours(pcmaxacc), Comments=$"{pcmax} Calculation time", CumTime=timeLapse(pcmaxacc), Concentration=Cpmax   } }
+                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ ReachTime =timeLapse(pc), Date =InitialTimeStamp.AddHours(pcacc), Comments=$"{pc} Calculation time", CumTime=timeLapse(pcacc), Concentration=toUSGSvalue(Cp)   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ ReachTime =timeLapse(pcmax), Date =InitialTimeStamp.AddHours(pcmaxacc), Comments=$"{pcmax} Calculation time", CumTime=timeLapse(pcmaxacc), Concentration=toUSGSvalue(Cpmax)   } }
                 };
                 result.Tracer_Response.TrailingEdge = new Dictionary<string, ConcentrationTime>() {
-                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ ReachTime =timeLapse(tl+Td10), Date =InitialTimeStamp.AddHours(trailacc), Comments=$"{tl+Td10} Calculation time", CumTime=timeLapse(trailacc), Concentration=0.1*Cp   } },
-                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ ReachTime =timeLapse(tlmax+Td10max), Date =InitialTimeStamp.AddHours(trailmaxacc), Comments=$"{tl+Td10max} Calculation time", CumTime=timeLapse(trailmaxacc), Concentration=0.1*Cpmax  } }
+                    {getProbabilityName(probabilityTypeEnum.e_MostProbable),new ConcentrationTime(){ ReachTime =timeLapse(tl+Td10), Date =InitialTimeStamp.AddHours(trailacc), Comments=$"{toUSGSvalue(tl+Td10)} Calculation time", CumTime=timeLapse(trailacc), Concentration=toUSGSvalue(0.1*Cp)   } },
+                    {getProbabilityName(probabilityTypeEnum.e_MaximumProbable),new ConcentrationTime(){ ReachTime =timeLapse(tlmax+Td10max), Date =InitialTimeStamp.AddHours(trailmaxacc), Comments=$"{tl+Td10max} Calculation time", CumTime=timeLapse(trailmaxacc), Concentration=toUSGSvalue(0.1*Cpmax)  } }
                 };
                 result.Equations = new Dictionary<string, Equation>()
                 {
                     {"vmax", new Equation(){
                             expression = getExpression(EquationEnum.e_velocity_Vmax, parms.Select(p=>p.Key)),
-                            value = evaluate(EquationEnum.e_velocity_Vmax, parms),
+                            value = toUSGSvalue(evaluate(EquationEnum.e_velocity_Vmax, parms)),
                             units = "m/s"
                         }
                     },
                     {"v", new Equation(){
                             expression = getExpression(EquationEnum.e_velocity_V, parms.Select(p=>p.Key)),
-                            value = evaluate(EquationEnum.e_velocity_V, parms),
+                            value = toUSGSvalue(evaluate(EquationEnum.e_velocity_V, parms)),
                             units = "m/s" }
                         }
                 };
@@ -677,6 +677,19 @@ namespace TravelTimeAgent
             {
                 return String.Format("{0} minutes", span.Minutes);
             }
+        }
+        private Double toUSGSvalue(double value)
+        {
+            Double x = value;
+            Double precision = 0;
+            if (x > 1000000 && x < 10000000) { precision = 10000; }
+            else if (x > 100000 && x < 1000000) { precision = 1000; }
+            else if (x > 10000 && x < 100000) { precision = 100; }
+            else if (x > 1000 && x < 10000) { precision = 10; }
+            else if (x > 100 && x < 1000) { precision = 1; }
+            else if (x < 100) { return Math.Round(x, 3); }
+
+            return Int32.Parse(((x + (precision * .5)) / precision).ToString()) * precision;
         }
         #endregion
         #region "Enumerated Constants"
