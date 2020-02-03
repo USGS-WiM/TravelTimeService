@@ -81,12 +81,13 @@ namespace TravelTimeAgent
 
         public DateTime InitialTimeStamp { get; private set; }
 
-        public Dictionary<string, double> UpstreamReach = new Dictionary<string, double>  // stores accumulated times for upstream reach
+        public Dictionary<string, double> Accumulations = new Dictionary<string, double>  // stores accumulated times for upstream reach
         {
             { "ur_tlacc", 0 },
             { "ur_tlmaxacc", 0 },
             { "ur_pcacc", 0 },
-            { "ur_pcmaxacc", 0 }
+            { "ur_pcmaxacc", 0 },
+            { "lengthacc", 0.0 }
         };
 
         public bool ShouldSerializeInitialTimeStamp()
@@ -188,9 +189,17 @@ namespace TravelTimeAgent
                     s => s.Aggregate((a, b) => aggregateParameters(a, b)).Value);
                 //add to start concentration
                 var m_i = getParameters(parameterEnum.e_M_i);
+                var d_acc = getParameters(parameterEnum.e_distance_acc);
                 m_i.Value = initialMassConcentration.Value * Constants.CF_kg2mg;
+                d_acc.Value = start.Parameters[4].Value + Accumulations["lengthacc"];
+                if (d_acc.Value.HasValue)
+                {
+                    Accumulations["lengthacc"] = d_acc.Value ?? 0;
+                } else { }
                 start.Parameters.Add(m_i);
                 aveParams.Add(m_i.Code,m_i.Value);
+                start.Parameters.Add(d_acc);
+                aveParams.Add(d_acc.Code, d_acc.Value);
 
                 // compute and solve travel time equations
                 end.Result = getTraveltimeResult(aveParams,end.Parameters.FirstOrDefault(p=>p.Code =="Q").Value);
@@ -220,17 +229,17 @@ namespace TravelTimeAgent
             try
             {
                 var tl = evaluate(EquationEnum.e_leadingedge, parms);
-                var tlacc = tl + UpstreamReach["ur_tlacc"];//0.89 * (UpstreamReach["ur_pcacc"] + tl);
+                var tlacc = tl + Accumulations["ur_tlacc"];//0.89 * (UpstreamReach["ur_pcacc"] + tl);
                 var tlmax = evaluate(EquationEnum.e_leadingedgemax, parms);
-                var tlmaxacc = tlmax + UpstreamReach["ur_tlmaxacc"];// 0.89 * (UpstreamReach["ur_pcmaxacc"] + tlmax);
+                var tlmaxacc = tlmax + Accumulations["ur_tlmaxacc"];// 0.89 * (UpstreamReach["ur_pcmaxacc"] + tlmax);
                 var pc = evaluate(EquationEnum.e_timepeakconcentration_T_p, parms);
-                var pcacc = pc + UpstreamReach["ur_pcacc"];
+                var pcacc = pc + Accumulations["ur_pcacc"];
                 var pcmax = evaluate(EquationEnum.e_timepeakconcentration_T_pmax, parms);
-                var pcmaxacc = pcmax + UpstreamReach["ur_pcmaxacc"];
+                var pcmaxacc = pcmax + Accumulations["ur_pcmaxacc"];
                 var Td10 = evaluate(EquationEnum.e_trailingedge, parms) * Constants.CF_sec2hrs;
-                var trailacc = Td10 + (UpstreamReach["ur_tlacc"] + tl);
+                var trailacc = Td10 + (Accumulations["ur_tlacc"] + tl);
                 var Td10max = evaluate(EquationEnum.e_trailingedgemax, parms) * Constants.CF_sec2hrs;
-                var trailmaxacc = Td10max + (UpstreamReach["ur_tlmaxacc"] + tlmax);
+                var trailmaxacc = Td10max + (Accumulations["ur_tlmaxacc"] + tlmax);
 
                 //change Q to end reach
                 parms["Q"] = Qend;
@@ -265,10 +274,10 @@ namespace TravelTimeAgent
                         }
                 };
 
-                UpstreamReach["ur_tlacc"] = tlacc;
-                UpstreamReach["ur_tlmaxacc"] = tlmaxacc;
-                UpstreamReach["ur_pcacc"] = pcacc;
-                UpstreamReach["ur_pcmaxacc"] = pcmaxacc;
+                Accumulations["ur_tlacc"] = tlacc;
+                Accumulations["ur_tlmaxacc"] = tlmaxacc;
+                Accumulations["ur_pcacc"] = pcacc;
+                Accumulations["ur_pcmaxacc"] = pcmaxacc;
 
                 return result;
             }
@@ -322,9 +331,9 @@ namespace TravelTimeAgent
                 case EquationEnum.e_unitpeakconcentration_C_up:
                 case EquationEnum.e_unitpeakconcentration_C_upmax:
                     if (availableparams.Contains("Q_a")) {
-                        equation = "857*({1} +" + UpstreamReach["ur_pcacc"] + ")^(-0.760*({0})^(-0.079) )";
+                        equation = "857*({1} +" + Accumulations["ur_pcacc"] + ")^(-0.760*({0})^(-0.079) )";
                     } else {
-                        equation = "1025 *({1} +" + UpstreamReach["ur_pcaccmax"] + ")^(-0.887)";
+                        equation = "1025 *({1} +" + Accumulations["ur_pcaccmax"] + ")^(-0.887)";
                     }//Eq 7
                     
                     break;
@@ -634,6 +643,14 @@ namespace TravelTimeAgent
                         Unit = getUnit(p),
                         Value = 1.0
                     };
+                case parameterEnum.e_distance_acc:
+                    return new Parameter()
+                    {
+                        Code = "L_acc",
+                        Name = "Cumulative Distance",
+                        Description = "Distance downstream from spill",
+                        Unit = getUnit(p)
+                    };
                 default:
                     throw new NotImplementedException("Parameter not implemented " + p);
             }// end switch            
@@ -655,6 +672,8 @@ namespace TravelTimeAgent
                     return new Units { Unit = "Milligrams", Abbr = "mg" };
                 case parameterEnum.e_R_r:
                     return new Units { Unit = "Dimensionless", Abbr = "dim" };
+                case parameterEnum.e_distance_acc:
+                    return new Units { Unit = "Meters", Abbr = "m" };
                 default:
                     throw new NotImplementedException("Parameter not implemented "+p);
             }//end switch
@@ -719,6 +738,7 @@ namespace TravelTimeAgent
             e_distance = 4,
             e_R_r = 5,
             e_M_i = 10,
+            e_distance_acc = 11
             
         }
         public enum velocityPeakEnum
