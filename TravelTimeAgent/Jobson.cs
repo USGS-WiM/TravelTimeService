@@ -699,8 +699,8 @@ namespace TravelTimeAgent
         }
         private Double toUSGSvalue(double value)
         {
-            Double x = value;
-            Double precision = 0;
+            float x = Convert.ToSingle(value);
+            int precision = 0;
             if (x > 1000000 && x < 10000000) { precision = 10000; }
             else if (x > 100000 && x < 1000000) { precision = 1000; }
             else if (x > 10000 && x < 100000) { precision = 100; }
@@ -708,7 +708,9 @@ namespace TravelTimeAgent
             else if (x > 100 && x < 1000) { precision = 1; }
             else if (x < 100) { return Math.Round(x, 3); }
 
-            return Int32.Parse(((x + (precision * .5)) / precision).ToString()) * precision;
+            var y = ((x + (precision * .5)) / precision).ToString();
+
+            return Math.Truncate(Convert.ToDouble(y)) * precision;
         }
         #endregion
         #region "Enumerated Constants"
