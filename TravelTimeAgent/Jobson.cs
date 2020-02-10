@@ -195,6 +195,7 @@ namespace TravelTimeAgent
                 if (d_acc.Value.HasValue)
                 {
                     Accumulations["lengthacc"] = d_acc.Value ?? 0;
+                    d_acc.Value = toUSGSvalue(d_acc.Value);
                 } else { }
                 start.Parameters.Add(m_i);
                 aveParams.Add(m_i.Code,m_i.Value);
@@ -697,7 +698,7 @@ namespace TravelTimeAgent
                 return String.Format("{0} minutes", span.Minutes);
             }
         }
-        private Double toUSGSvalue(double value)
+        private Double toUSGSvalue(double? value)
         {
             float x = Convert.ToSingle(value);
             int precision = 0;
