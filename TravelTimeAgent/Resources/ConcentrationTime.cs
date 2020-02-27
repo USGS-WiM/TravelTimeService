@@ -6,11 +6,11 @@ namespace TravelTimeAgent.Resources
 {
     public class ConcentrationTime
     {
-        public String ReachTime { get; set; }
+        public TimeSpan ReachTime { get; set; } //set to string to display days, hours, min
 
         public DateTime Date { get; set; }
         public Double Concentration { get; set; }
-        public String CumTime { get; set; }
+        public TimeSpan CumTime { get; set; } //set to string to display days, hours, min
         public String Comments { get; set; }
     }
 }

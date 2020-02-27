@@ -23,6 +23,23 @@ namespace TravelTimeAgent.Resources
         public double? Default { get; set; }
         public bool ShouldSerializeDefault()
         { return Default.HasValue; }
+
+        public Parameter Clone()
+        {
+            return new Parameter()
+            {
+                Name = this.Name,
+                Description = this.Description,
+                Code = this.Code,
+                Unit = new Units()
+                {
+                    Unit = this.Unit.Unit,
+                    Abbr = this.Unit.Abbr
+                },
+                Value = this.Value,
+                Required = this.Required
+            };
+        }
     }
 
     public class Units

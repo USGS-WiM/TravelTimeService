@@ -141,13 +141,29 @@ namespace TravelTimeAgent
             {
                 InitialTimeStamp = starttime.HasValue?starttime.Value:DateTime.Today;
                 if (!IsValid) throw new Exception("Jobson parameters are invalid");
-                
+
+                var d_acc = getParameters(parameterEnum.e_distance_acc);
+
+                double distance = 0.0;
 
                 for (int i = 1; i < this.Reaches.Count; i++)
                 {
+                    //adds accumulated distance to list of parameters
+                    var acc_clone = d_acc.Clone();  //create shallow copy of d_acc
+                    acc_clone.Value = distance + this.Reaches.ElementAt(i - 1).Value.Parameters[4].Value.Value;
+                    this.Reaches.ElementAt(i - 1).Value.Parameters.Add(acc_clone);
+                    distance = this.Reaches.ElementAt(i - 1).Value.Parameters[6].Value.Value;
+
                     var startingReach = this.Reaches.ElementAt(i - 1).Value;
                     var endingreach = this.Reaches.ElementAt(i).Value;
-                    
+
+                    if (i == (this.Reaches.Count - 1))  //capture final reach and output accumulated distance
+                    {
+                        this.Reaches.ElementAt(i).Value.Parameters.Add(d_acc);
+                        this.Reaches.ElementAt(i).Value.Parameters[6].Value = toUSGSvalue(distance + this.Reaches.ElementAt(i).Value.Parameters[4].Value);
+                        distance = this.Reaches.ElementAt(i).Value.Parameters[6].Value.Value;
+                    }
+
 
                     if (!loadEstimate(startingReach, endingreach, InitialMass_M_i_kg)) throw new Exception("Estimate failed to compute.");                    
                 }//next i
@@ -189,18 +205,18 @@ namespace TravelTimeAgent
                     s => s.Aggregate((a, b) => aggregateParameters(a, b)).Value);
                 //add to start concentration
                 var m_i = getParameters(parameterEnum.e_M_i);
-                var d_acc = getParameters(parameterEnum.e_distance_acc);
+                //var d_acc = getParameters(parameterEnum.e_distance_acc);
                 m_i.Value = initialMassConcentration.Value * Constants.CF_kg2mg;
-                d_acc.Value = start.Parameters[4].Value + Accumulations["lengthacc"];
-                if (d_acc.Value.HasValue)
-                {
-                    Accumulations["lengthacc"] = d_acc.Value ?? 0;
-                    d_acc.Value = toUSGSvalue(d_acc.Value);
-                } else { }
+                //d_acc.Value = end.Parameters[4].Value + Accumulations["lengthacc"];
+                //if (d_acc.Value.HasValue)
+                //{
+                //    Accumulations["lengthacc"] = d_acc.Value ?? 0;
+                //    d_acc.Value = toUSGSvalue(d_acc.Value);
+                //} else { }
                 start.Parameters.Add(m_i);
                 aveParams.Add(m_i.Code,m_i.Value);
-                start.Parameters.Add(d_acc);
-                aveParams.Add(d_acc.Code, d_acc.Value);
+                //start.Parameters.Add(d_acc);
+                //aveParams.Add(d_acc.Code, d_acc.Value);
 
                 // compute and solve travel time equations
                 end.Result = getTraveltimeResult(aveParams,end.Parameters.FirstOrDefault(p=>p.Code =="Q").Value);
@@ -682,21 +698,22 @@ namespace TravelTimeAgent
         private void sm(string msg, MessageType type = MessageType.info) {
             
         }
-        private String timeLapse(double hours)
+        private TimeSpan timeLapse(double hours)
         {
             TimeSpan span = InitialTimeStamp.AddHours(hours) - InitialTimeStamp;
-            if (span.Days != 0 && span.Hours != 0)
-            {
-                return String.Format("{0} days, {1} hours, {2} minutes", span.Days, span.Hours, span.Minutes);
-            } 
-            if(span.Days == 0 && span.Hours != 0)
-            {
-                return String.Format("{0} hours, {1} minutes", span.Hours, span.Minutes);
-            } 
-            else
-            {
-                return String.Format("{0} minutes", span.Minutes);
-            }
+            //if (span.Days != 0 && span.Hours != 0)
+            //{
+            //    return String.Format("{0} days, {1} hours, {2} minutes", span.Days, span.Hours, span.Minutes);
+            //} 
+            //if(span.Days == 0 && span.Hours != 0)
+            //{
+            //    return String.Format("{0} hours, {1} minutes", span.Hours, span.Minutes);
+            //} 
+            //else
+            //{
+            //    return String.Format("{0} minutes", span.Minutes);
+            //}
+            return span;
         }
         private Double toUSGSvalue(double? value)
         {
