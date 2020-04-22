@@ -146,7 +146,7 @@ namespace TravelTimeAgent
 
                 double distance = 0.0;
 
-                for (int i = 1; i < this.Reaches.Count; i++)
+                for (int i = 1; i <= this.Reaches.Count; i++)
                 {
                     //adds accumulated distance to list of parameters
                     var acc_clone = d_acc.Clone();  //create shallow copy of d_acc
@@ -154,18 +154,9 @@ namespace TravelTimeAgent
                     this.Reaches.ElementAt(i - 1).Value.Parameters.Add(acc_clone);
                     distance = this.Reaches.ElementAt(i - 1).Value.Parameters[6].Value.Value;
 
-                    var startingReach = this.Reaches.ElementAt(i - 1).Value;
-                    var endingreach = this.Reaches.ElementAt(i).Value;
+                    var activeReach = this.Reaches.ElementAt(i - 1).Value;
 
-                    if (i == (this.Reaches.Count - 1))  //capture final reach and output accumulated distance
-                    {
-                        this.Reaches.ElementAt(i).Value.Parameters.Add(d_acc);
-                        this.Reaches.ElementAt(i).Value.Parameters[6].Value = toUSGSvalue(distance + this.Reaches.ElementAt(i).Value.Parameters[4].Value);
-                        distance = this.Reaches.ElementAt(i).Value.Parameters[6].Value.Value;
-                    }
-
-
-                    if (!loadEstimate(startingReach, endingreach, InitialMass_M_i_kg)) throw new Exception("Estimate failed to compute.");                    
+                    if (!loadEstimate(activeReach, InitialMass_M_i_kg)) throw new Exception("Estimate failed to compute."); //startingReach, endingreach, InitialMass_M_i_kg)) throw new Exception("Estimate failed to compute.");                    
                 }//next i
                 return true;
             }
@@ -194,38 +185,27 @@ namespace TravelTimeAgent
                  Parameters = this._availableParameters.Cast<Parameter>().ToList()
             });
         }
-        private bool loadEstimate(Reach start, Reach end, double? initialMassConcentration = null)
+        private bool loadEstimate(Reach reach, double? initialMassConcentration = null)
         {
             try
             {
                 //average start and end parameters
-                List<Parameter> paramlist = new List<Parameter>(start.Parameters);
-                paramlist.AddRange(end.Parameters);
-                var aveParams = paramlist.GroupBy(k => k.Code).ToDictionary(k => k.FirstOrDefault().Code,
-                    s => s.Aggregate((a, b) => aggregateParameters(a, b)).Value);
-                //add to start concentration
+                List<Parameter> paramlist = new List<Parameter>(reach.Parameters);
+                var aveParams = paramlist.GroupBy(k => k.Code).ToDictionary(k => k.FirstOrDefault().Code, s => s.Aggregate((a, b) => aggregateParameters(a, b)).Value);
+                //add start concentration
                 var m_i = getParameters(parameterEnum.e_M_i);
-                //var d_acc = getParameters(parameterEnum.e_distance_acc);
                 m_i.Value = initialMassConcentration.Value * Constants.CF_kg2mg;
-                //d_acc.Value = end.Parameters[4].Value + Accumulations["lengthacc"];
-                //if (d_acc.Value.HasValue)
-                //{
-                //    Accumulations["lengthacc"] = d_acc.Value ?? 0;
-                //    d_acc.Value = toUSGSvalue(d_acc.Value);
-                //} else { }
-                start.Parameters.Add(m_i);
+                //reach.Parameters.Add(m_i); //adds original spill mass to each reach parameter list
                 aveParams.Add(m_i.Code,m_i.Value);
-                //start.Parameters.Add(d_acc);
-                //aveParams.Add(d_acc.Code, d_acc.Value);
 
                 // compute and solve travel time equations
-                end.Result = getTraveltimeResult(aveParams,end.Parameters.FirstOrDefault(p=>p.Code =="Q").Value);
+                reach.Result = getTraveltimeResult(aveParams,reach.Parameters.FirstOrDefault(p=>p.Code =="Q").Value);
       
                 return true;
             }
             catch (Exception ex)
             {
-                sm("Failed to estimate for reaches " + start.Name + end.Name, MessageType.error);
+                sm("Failed to estimate for reaches " + reach.Name, MessageType.error);//start.Name + end.Name, MessageType.error);
                 return false;
             }
         }
