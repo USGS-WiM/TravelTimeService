@@ -245,7 +245,7 @@ namespace TravelTimeDB.Test
                             p.Value = 16000 * Constants.CF_sqrkm2sqrm;//m2
                             break;
                         case "L":
-                            p.Value = 0.0;
+                            p.Value = 20;
                             break;
                         case "R_r":
                             //keep default
