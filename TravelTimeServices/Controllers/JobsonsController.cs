@@ -24,10 +24,12 @@ using TravelTimeAgent;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using WIM.Resources;
+//using WIM.Services.Attributes;
 
 namespace TravelTimeServices.Controllers
 {
     [Route("[controller]")]
+    //[APIDescription(type = DescriptionType.e_string, Description = "The Jobsons resource represents the prediction of travel time as documented in Prediction of Traveltime and Longitudinal Dispersion in Rivers and Streams (Jobson, 1996.) Resultants return the calculated volume, accumulated travel times for the leading edge, peak, and trailing edge of a spill, the peak concentration, accumulated distance downstream, and associated input parameters.")]
     public class JobsonsController : WIM.Services.Controllers.ControllerBase
     {
         public ITravelTimeAgent agent { get; set; }
@@ -36,7 +38,8 @@ namespace TravelTimeServices.Controllers
             this.agent = agent;
         }
         #region METHODS
-        [HttpGet()]
+        [HttpGet(Name = "Initialize")]
+        //[APIDescription(type = DescriptionType.e_link, Description = "/Docs/Jobsons/initialize.md")]
         public async Task<IActionResult> Get()
         {
             //returns list of available Navigations
@@ -50,7 +53,8 @@ namespace TravelTimeServices.Controllers
                 return HandleException(ex);
             }
         }
-        [HttpPost()][HttpGet("Execute")]
+        [HttpPost("Execute", Name = "Compute Jobsons")][HttpGet("Execute", Name = "Compute Jobsons")]
+        //[APIDescription(type = DescriptionType.e_link, Description = "/Docs/Jobsons/compute_jobsons.md")]
         public async Task<IActionResult> Execute([FromBody]Jobson configurations, [FromQuery]Double? initialmassconcentration = null, [FromQuery]DateTime? starttime = null)
         {
             try
